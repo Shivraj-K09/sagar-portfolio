@@ -37,7 +37,7 @@ export function HeroSection() {
 
   return (
     <section
-      className="w-full min-h-[90vh] flex items-center justify-center py-20 md:py-0"
+      className="w-full min-h-[85vh] lg:min-h-[90vh] flex items-center justify-center  md:py-0"
       aria-labelledby="hero-heading"
     >
       <div className="container px-4 md:px-6 mx-auto max-w-5xl">
