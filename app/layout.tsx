@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import { Geist, Dancing_Script } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FilmGrain } from "@/components/film-grain";
+import { Analytics } from "@vercel/analytics/next";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -129,6 +130,7 @@ export default function RootLayout({
         >
           {children}
           <FilmGrain />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
