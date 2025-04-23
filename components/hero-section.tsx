@@ -162,7 +162,7 @@ export function HeroSection() {
                 asChild
               >
                 <Link
-                  href="mailto:kadgonds@gmail.com"
+                  href="https://mail.google.com/mail/?view=cm&fs=1&to=kadgonds@gmail.com"
                   aria-label="Get in touch via email"
                 >
                   Get in Touch
