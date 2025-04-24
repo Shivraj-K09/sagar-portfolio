@@ -7,6 +7,7 @@ import { fetchVideoDetails } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { VideoStats } from "@/components/video-stats";
 import { motion } from "framer-motion";
+import { useMobile } from "@/hooks/use-mobile";
 
 // Helper function to extract video ID from YouTube URL
 function extractVideoId(url: any) {
@@ -231,6 +232,7 @@ const itemVariants = {
 };
 
 export function VideoShowcase() {
+  const isMobile = useMobile();
   const [projects, setProjects] = useState<VideoProject[]>([]);
   const [visibleProjects, setVisibleProjects] = useState<VideoProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -463,6 +465,14 @@ export function VideoShowcase() {
     }
   };
 
+  const handleVideoInteraction = (projectId: string) => {
+    if (!isMobile) {
+      // On desktop, toggle hover state
+      setHoveredVideo(hoveredVideo === projectId ? null : projectId);
+    }
+    // On mobile, do nothing here as the Link will handle the click directly
+  };
+
   return (
     <>
       <motion.section
@@ -553,10 +563,20 @@ export function VideoShowcase() {
                       rel="noopener noreferrer"
                       className="block h-full group"
                       aria-label={`Watch ${project.title}`}
+                      onClick={(e) => {
+                        if (!isMobile && hoveredVideo === project.id) {
+                          // If on desktop and video is already playing, allow the link to work
+                          return true;
+                        } else if (!isMobile) {
+                          // If on desktop and video is not playing, prevent navigation and show preview
+                          e.preventDefault();
+                          setHoveredVideo(project.id);
+                        }
+                        // On mobile, let the link work normally (direct to YouTube)
+                      }}
                     >
                       <div className="relative h-full overflow-hidden bg-neutral-900">
-                        {hoveredVideo === project.id ? (
-                          // Custom video player when hovered
+                        {!isMobile && hoveredVideo === project.id ? ( // Custom video player when hovered
                           <div className="h-full w-full relative">
                             {/* Custom video player with CSS overlay to hide YouTube UI */}
                             <div className="absolute inset-0 w-full h-full youtube-embed-container">
@@ -617,7 +637,7 @@ export function VideoShowcase() {
                         ></div>
 
                         {/* Play button (only show when not playing) */}
-                        {hoveredVideo !== project.id && (
+                        {!isMobile && hoveredVideo !== project.id && (
                           <div
                             className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500 ease-out flex items-center justify-center"
                             aria-hidden="true"
@@ -628,8 +648,30 @@ export function VideoShowcase() {
                           </div>
                         )}
 
+                        {/* Mobile-specific play button (always visible) */}
+                        {isMobile && (
+                          <div
+                            className="absolute inset-0 bg-black/10 flex items-center justify-center"
+                            aria-hidden="true"
+                          >
+                            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                              <Play className="h-7 w-7 text-black ml-0.5" />
+                            </div>
+                          </div>
+                        )}
+
                         {/* Video title */}
-                        <div className="absolute bottom-0 left-0 p-4 w-full opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-500 ease-out">
+                        <div
+                          className={`absolute bottom-0 left-0 p-4 w-full ${
+                            isMobile
+                              ? "opacity-100"
+                              : "opacity-0 group-hover:opacity-100"
+                          } transform ${
+                            isMobile
+                              ? "translate-y-0"
+                              : "translate-y-2 group-hover:translate-y-0"
+                          } transition-all duration-500 ease-out`}
+                        >
                           <h3 className="text-white text-sm font-medium line-clamp-2">
                             {project.title}
                           </h3>

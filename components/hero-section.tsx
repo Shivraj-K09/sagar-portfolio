@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import type { ClapIconHandle } from "./icons/clap-icon";
 import { SocialIcons } from "./hero-section-social";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export function HeroSection() {
   const scrollToWork = () => {
@@ -202,12 +203,14 @@ export function HeroSection() {
                 className="rounded-full px-6 bg-black dark:bg-white hover:bg-black/80 dark:hover:bg-white/80 text-white dark:text-black font-normal"
                 asChild
               >
-                <a
-                  href="mailto:kadgonds@gmail.com"
-                  aria-label="Get in touch via email"
+                <Link
+                  href="https://mail.google.com/mail/?view=cm&fs=1&to=kadgonds@gmail.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Compose an email in Gmail"
                 >
                   Get in Touch
-                </a>
+                </Link>
               </Button>
             </div>
 
