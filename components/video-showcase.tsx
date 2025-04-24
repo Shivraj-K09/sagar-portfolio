@@ -525,7 +525,7 @@ export function VideoShowcase() {
               {/* Left Arrow - Increased size */}
               <motion.button
                 onClick={scrollLeft}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white rounded-full p-4 backdrop-blur-sm transition-all duration-200 opacity-70 hover:opacity-100 shadow-lg"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white rounded-full md:p-4 p-1 backdrop-blur-sm transition-all duration-200 opacity-70 hover:opacity-100 shadow-lg"
                 aria-label="Previous videos"
                 variants={itemVariants}
               >
@@ -654,7 +654,7 @@ export function VideoShowcase() {
               {/* Right Arrow - Increased size */}
               <motion.button
                 onClick={scrollRight}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white rounded-full p-4 backdrop-blur-sm transition-all duration-200 opacity-70 hover:opacity-100 shadow-lg"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white rounded-full md:p-4 p-1 backdrop-blur-sm transition-all duration-200 opacity-70 hover:opacity-100 shadow-lg"
                 aria-label="Next videos"
                 variants={itemVariants}
               >
