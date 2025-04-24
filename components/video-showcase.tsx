@@ -35,119 +35,102 @@ const PORTFOLIO_PROJECTS = [
     id: extractVideoId("https://www.youtube.com/watch?v=r-_40oLqawY"),
     title: "Video Project 1",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=UeNa1cJhO5s"),
     title: "Video Project 2",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=5KvmYGkMIvM"),
     title: "Video Project 3",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=HfUTAtIy0MA"),
     title: "Video Project 4",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=90nd1uhdrM4"),
     title: "Video Project 5",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=eTmvtdsHb8w"),
     title: "Video Project 6",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/shorts/KgPq-v7TjYI"),
     title: "Short Video 1",
     category: "Short",
-    year: "2023",
     isShort: true,
   },
   {
     id: extractVideoId("https://www.youtube.com/shorts/KGqmHB-7fFc"),
     title: "Short Video 2",
     category: "Short",
-    year: "2023",
     isShort: true,
   },
   {
     id: extractVideoId("https://www.youtube.com/shorts/FBmjQ6fNpas"),
     title: "Short Video 3",
     category: "Short",
-    year: "2023",
     isShort: true,
   },
   {
     id: extractVideoId("https://www.youtube.com/shorts/_VMyiirPCtU"),
     title: "Short Video 4",
     category: "Short",
-    year: "2023",
     isShort: true,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=PjDgNbg1RtM"),
     title: "Short Video 5",
     category: "Short",
-    year: "2023",
     isShort: true,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=G62QsMn1sG8"),
     title: "Video Project 7",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=0xE_PmWqqu0"),
     title: "Video Project 8",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=-W3dWXB3H_U"),
     title: "Video Project 9",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=RyOZv_eVLw4"),
     title: "Video Project 10",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=wvEVQB6r5Tg"),
     title: "Video Project 11",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=-vEtFnyz4wU"),
     title: "Video Project 12",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   // Adding the two new videos
@@ -155,14 +138,19 @@ const PORTFOLIO_PROJECTS = [
     id: extractVideoId("https://www.youtube.com/watch?v=ZxKPSctpi0E"),
     title: "What if Palpatine Defeated Mace Windu Before Anakin Arrived",
     category: "Video",
-    year: "2023",
     isShort: false,
   },
   {
     id: extractVideoId("https://www.youtube.com/watch?v=lveGVl5S06k"),
     title: "What If R2-D2 Was Reprogrammed with HK-47's Assassin Protocols",
     category: "Video",
-    year: "2023",
+    isShort: false,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=kU0ZwzQlSFk"),
+    title: "What if Padme JOINED Anakin on Mustafar",
+    category: "Video",
     isShort: false,
   },
 ];
@@ -188,6 +176,7 @@ const THUMBNAIL_URLS = {
   "-vEtFnyz4wU": "https://img.youtube.com/vi/-vEtFnyz4wU/hqdefault.jpg",
   ZxKPSctpi0E: "https://img.youtube.com/vi/ZxKPSctpi0E/hqdefault.jpg",
   lveGVl5S06k: "https://img.youtube.com/vi/lveGVl5S06k/hqdefault.jpg",
+  kU0ZwzQlSFk: "https://img.youtube.com/vi/kU0ZwzQlSFk/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
@@ -204,7 +193,7 @@ interface VideoProject {
   id: string;
   title: string;
   category: string;
-  year: string;
+  year?: string;
   isShort?: boolean;
   thumbnailUrl?: string;
   statistics?: {
