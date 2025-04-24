@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { fetchVideoDetails } from "@/app/actions"
-import { Play, ChevronLeft, ChevronRight } from "lucide-react"
-import { VideoStats } from "@/components/video-stats"
+import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { fetchVideoDetails } from "@/app/actions";
+import { Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { VideoStats } from "@/components/video-stats";
 
 // Helper function to extract video ID from YouTube URL
-function extractVideoId(url) {
+function extractVideoId(url: any) {
   // Handle regular YouTube URLs
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
-  const match = url.match(regExp)
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
 
   if (match && match[2].length === 11) {
-    return match[2]
+    return match[2];
   }
 
   // Handle YouTube Shorts URLs
-  const shortsRegExp = /^.*(youtube.com\/shorts\/)([^#&?]*).*/
-  const shortsMatch = url.match(shortsRegExp)
+  const shortsRegExp = /^.*(youtube.com\/shorts\/)([^#&?]*).*/;
+  const shortsMatch = url.match(shortsRegExp);
 
   if (shortsMatch && shortsMatch[2].length === 11) {
-    return shortsMatch[2]
+    return shortsMatch[2];
   }
 
-  return null
+  return null;
 }
 
 // Updated portfolio projects with the provided YouTube videos
@@ -164,208 +164,322 @@ const PORTFOLIO_PROJECTS = [
     year: "2023",
     isShort: false,
   },
-]
+];
+
+// Pre-define thumbnail URLs to avoid API calls
+const THUMBNAIL_URLS = {
+  "r-_40oLqawY": "https://img.youtube.com/vi/r-_40oLqawY/hqdefault.jpg",
+  UeNa1cJhO5s: "https://img.youtube.com/vi/UeNa1cJhO5s/hqdefault.jpg",
+  "5KvmYGkMIvM": "https://img.youtube.com/vi/5KvmYGkMIvM/hqdefault.jpg",
+  HfUTAtIy0MA: "https://img.youtube.com/vi/HfUTAtIy0MA/hqdefault.jpg",
+  "90nd1uhdrM4": "https://img.youtube.com/vi/90nd1uhdrM4/hqdefault.jpg",
+  eTmvtdsHb8w: "https://img.youtube.com/vi/eTmvtdsHb8w/hqdefault.jpg",
+  "KgPq-v7TjYI": "https://img.youtube.com/vi/KgPq-v7TjYI/hqdefault.jpg",
+  "KGqmHB-7fFc": "https://img.youtube.com/vi/KGqmHB-7fFc/hqdefault.jpg",
+  FBmjQ6fNpas: "https://img.youtube.com/vi/FBmjQ6fNpas/hqdefault.jpg",
+  _VMyiirPCtU: "https://img.youtube.com/vi/_VMyiirPCtU/hqdefault.jpg",
+  PjDgNbg1RtM: "https://img.youtube.com/vi/PjDgNbg1RtM/hqdefault.jpg",
+  G62QsMn1sG8: "https://img.youtube.com/vi/G62QsMn1sG8/hqdefault.jpg",
+  "0xE_PmWqqu0": "https://img.youtube.com/vi/0xE_PmWqqu0/hqdefault.jpg",
+  "-W3dWXB3H_U": "https://img.youtube.com/vi/-W3dWXB3H_U/hqdefault.jpg",
+  RyOZv_eVLw4: "https://img.youtube.com/vi/RyOZv_eVLw4/hqdefault.jpg",
+  wvEVQB6r5Tg: "https://img.youtube.com/vi/wvEVQB6r5Tg/hqdefault.jpg",
+  "-vEtFnyz4wU": "https://img.youtube.com/vi/-vEtFnyz4wU/hqdefault.jpg",
+  ZxKPSctpi0E: "https://img.youtube.com/vi/ZxKPSctpi0E/hqdefault.jpg",
+  lveGVl5S06k: "https://img.youtube.com/vi/lveGVl5S06k/hqdefault.jpg",
+};
 
 // Fisher-Yates shuffle algorithm
 function shuffleArray<T>(array: T[]): T[] {
-  const newArray = [...array]
+  const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
-  return newArray
+  return newArray;
 }
 
 interface VideoProject {
-  id: string
-  title: string
-  category: string
-  year: string
-  isShort?: boolean
-  thumbnailUrl?: string
+  id: string;
+  title: string;
+  category: string;
+  year: string;
+  isShort?: boolean;
+  thumbnailUrl?: string;
   statistics?: {
-    viewCount: number
-    likeCount: number
-  }
+    viewCount: number;
+    likeCount: number;
+  };
 }
 
+// Preload a subset of videos initially
+const INITIAL_VISIBLE_VIDEOS = 6;
+
 export function VideoShowcase() {
-  const [projects, setProjects] = useState<VideoProject[]>([])
-  const [loading, setLoading] = useState(true)
-  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null)
-  const [autoScroll, setAutoScroll] = useState(true)
-  const carouselRef = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeftPos, setScrollLeftPos] = useState(0)
+  const [projects, setProjects] = useState<VideoProject[]>([]);
+  const [visibleProjects, setVisibleProjects] = useState<VideoProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
   const [totalStats, setTotalStats] = useState({
     views: 0,
     likes: 0,
-  })
-  const [currentFocusIndex, setCurrentFocusIndex] = useState(-1)
+  });
+  const [currentFocusIndex, setCurrentFocusIndex] = useState(-1);
+  const [apiDataLoaded, setApiDataLoaded] = useState(false);
 
+  // Initialize with static thumbnails immediately
   useEffect(() => {
-    // Shuffle the projects initially
-    const shuffledProjects = shuffleArray(PORTFOLIO_PROJECTS)
+    const shuffledProjects = shuffleArray(PORTFOLIO_PROJECTS);
 
-    const fetchThumbnails = async () => {
-      try {
-        const updatedProjects = await Promise.all(
-          shuffledProjects.map(async (project) => {
-            try {
-              const details = await fetchVideoDetails(project.id)
-              return {
-                ...project,
-                title: details.title || project.title,
-                thumbnailUrl:
-                  details.thumbnails?.maxres?.url ||
-                  details.thumbnails?.high?.url ||
-                  `https://img.youtube.com/vi/${project.id}/hqdefault.jpg`,
-                statistics: details.statistics,
-              }
-            } catch (error) {
-              console.error(`Error fetching details for ${project.id}:`, error)
-              return {
-                ...project,
-                thumbnailUrl: `https://img.youtube.com/vi/${project.id}/hqdefault.jpg`,
-                statistics: { viewCount: 0, likeCount: 0 },
-              }
-            }
-          }),
-        )
+    // Create initial projects with static thumbnails
+    const initialProjects = shuffledProjects.map((project) => ({
+      ...project,
+      thumbnailUrl:
+        THUMBNAIL_URLS[project.id as keyof typeof THUMBNAIL_URLS] ||
+        `https://img.youtube.com/vi/${project.id}/hqdefault.jpg`,
+      statistics: { viewCount: 0, likeCount: 0 },
+    }));
 
-        // Calculate total views and likes
-        const totalViews = updatedProjects.reduce((sum, project) => sum + (project.statistics?.viewCount || 0), 0)
-        const totalLikes = updatedProjects.reduce((sum, project) => sum + (project.statistics?.likeCount || 0), 0)
+    setProjects(initialProjects);
+    setVisibleProjects(initialProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
+    setLoading(false);
 
-        setTotalStats({
-          views: totalViews,
-          likes: totalLikes,
+    // Then fetch API data in the background
+    fetchApiData(initialProjects);
+  }, []);
+
+  // Fetch API data in the background
+  const fetchApiData = async (initialProjects: VideoProject[]) => {
+    try {
+      // Only fetch first 8 videos' details to improve performance
+      const projectsToFetch = initialProjects.slice(0, 8);
+
+      const updatedProjects = await Promise.all(
+        projectsToFetch.map(async (project) => {
+          try {
+            const details = await fetchVideoDetails(project.id);
+            return {
+              ...project,
+              title: details.title || project.title,
+              thumbnailUrl:
+                details.thumbnails?.maxres?.url ||
+                details.thumbnails?.high?.url ||
+                project.thumbnailUrl,
+              statistics: details.statistics,
+            };
+          } catch (error) {
+            console.error(`Error fetching details for ${project.id}:`, error);
+            return project;
+          }
         })
+      );
 
-        setProjects(updatedProjects)
-      } catch (error) {
-        console.error("Error fetching project details:", error)
-      } finally {
-        setLoading(false)
-      }
+      // Merge updated projects with the rest
+      const mergedProjects = [...initialProjects];
+      updatedProjects.forEach((updatedProject, index) => {
+        const projectIndex = initialProjects.findIndex(
+          (p) => p.id === updatedProject.id
+        );
+        if (projectIndex !== -1) {
+          mergedProjects[projectIndex] = updatedProject;
+        }
+      });
+
+      // Calculate total views and likes
+      const totalViews = mergedProjects.reduce(
+        (sum, project) => sum + (project.statistics?.viewCount || 0),
+        0
+      );
+      const totalLikes = mergedProjects.reduce(
+        (sum, project) => sum + (project.statistics?.likeCount || 0),
+        0
+      );
+
+      setTotalStats({
+        views: totalViews,
+        likes: totalLikes,
+      });
+
+      setProjects(mergedProjects);
+      setVisibleProjects(mergedProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
+      setApiDataLoaded(true);
+    } catch (error) {
+      console.error("Error fetching project details:", error);
     }
+  };
 
-    fetchThumbnails()
-  }, [])
+  // Load more videos as user scrolls
+  const loadMoreVideos = useCallback(() => {
+    if (visibleProjects.length < projects.length) {
+      const nextBatch = projects.slice(
+        visibleProjects.length,
+        visibleProjects.length + 3
+      );
+      setVisibleProjects((prev) => [...prev, ...nextBatch]);
+    }
+  }, [visibleProjects.length, projects]);
 
   // Auto-scroll functionality
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
+    let interval: NodeJS.Timeout | null = null;
 
     if (autoScroll && !isDragging && !loading) {
       interval = setInterval(() => {
         if (carouselRef.current) {
-          carouselRef.current.scrollLeft += 2
+          carouselRef.current.scrollLeft += 2;
+
+          // Load more videos when approaching the end
+          if (
+            carouselRef.current.scrollLeft + carouselRef.current.offsetWidth >
+            carouselRef.current.scrollWidth - 500
+          ) {
+            loadMoreVideos();
+          }
 
           // Reset to beginning when reaching end
           if (
             carouselRef.current.scrollLeft >=
-            carouselRef.current.scrollWidth - carouselRef.current.offsetWidth - 10
+            carouselRef.current.scrollWidth -
+              carouselRef.current.offsetWidth -
+              10
           ) {
-            carouselRef.current.scrollLeft = 0
+            carouselRef.current.scrollLeft = 0;
           }
         }
-      }, 15)
+      }, 15);
     }
 
     return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [autoScroll, isDragging, loading])
-
-  // Create duplicated projects for infinite effect
-  const duplicatedProjects = [...projects, ...projects, ...projects]
+      if (interval) clearInterval(interval);
+    };
+  }, [autoScroll, isDragging, loading, loadMoreVideos]);
 
   // Mouse event handlers for drag scrolling
-  function handleMouseDown(event) {
-    setIsDragging(true)
-    setAutoScroll(false)
+  function handleMouseDown(event: any) {
+    setIsDragging(true);
+    setAutoScroll(false);
 
     if (carouselRef.current) {
-      setStartX(event.pageX - carouselRef.current.offsetLeft)
-      setScrollLeftPos(carouselRef.current.scrollLeft)
+      setStartX(event.pageX - carouselRef.current.offsetLeft);
+      setScrollLeftPos(carouselRef.current.scrollLeft);
     }
   }
 
   function handleMouseUp() {
-    setIsDragging(false)
-    setAutoScroll(true)
+    setIsDragging(false);
+    setAutoScroll(true);
   }
 
   function handleMouseLeave() {
     if (isDragging) {
-      setIsDragging(false)
-      setAutoScroll(true)
+      setIsDragging(false);
+      setAutoScroll(true);
     }
   }
 
-  function handleMouseMove(event) {
-    if (!isDragging) return
+  function handleMouseMove(event: any) {
+    if (!isDragging) return;
 
-    event.preventDefault()
+    event.preventDefault();
 
     if (carouselRef.current) {
-      const x = event.pageX - carouselRef.current.offsetLeft
-      const walk = (x - startX) * 2 // Scroll speed multiplier
-      carouselRef.current.scrollLeft = scrollLeftPos - walk
+      const x = event.pageX - carouselRef.current.offsetLeft;
+      const walk = (x - startX) * 2; // Scroll speed multiplier
+      carouselRef.current.scrollLeft = scrollLeftPos - walk;
+
+      // Load more videos when dragging near the end
+      if (
+        carouselRef.current.scrollLeft + carouselRef.current.offsetWidth >
+        carouselRef.current.scrollWidth - 500
+      ) {
+        loadMoreVideos();
+      }
     }
   }
 
   // Arrow navigation functions
   const scrollLeft = () => {
     if (carouselRef.current) {
-      const scrollAmount = 600 // Adjust this value to control scroll distance
+      const scrollAmount = 600; // Adjust this value to control scroll distance
       carouselRef.current.scrollBy({
         left: -scrollAmount,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
 
   const scrollRight = () => {
     if (carouselRef.current) {
-      const scrollAmount = 600 // Adjust this value to control scroll distance
+      const scrollAmount = 600; // Adjust this value to control scroll distance
       carouselRef.current.scrollBy({
         left: scrollAmount,
         behavior: "smooth",
-      })
+      });
+
+      // Load more videos when scrolling right
+      if (
+        carouselRef.current.scrollLeft +
+          carouselRef.current.offsetWidth +
+          scrollAmount >
+        carouselRef.current.scrollWidth - 500
+      ) {
+        loadMoreVideos();
+      }
     }
-  }
+  };
 
   // Keyboard navigation for the carousel
-  const handleKeyDown = (e, index) => {
+  const handleKeyDown = (e: any, index: number) => {
     if (e.key === "ArrowRight") {
-      e.preventDefault()
-      setCurrentFocusIndex((index + 1) % duplicatedProjects.length)
+      e.preventDefault();
+      setCurrentFocusIndex((index + 1) % visibleProjects.length);
     } else if (e.key === "ArrowLeft") {
-      e.preventDefault()
-      setCurrentFocusIndex((index - 1 + duplicatedProjects.length) % duplicatedProjects.length)
+      e.preventDefault();
+      setCurrentFocusIndex(
+        (index - 1 + visibleProjects.length) % visibleProjects.length
+      );
     }
-  }
+  };
 
   return (
     <>
-      <section id="work" className="py-16 bg-black overflow-hidden" aria-labelledby="work-heading">
+      <section
+        id="work"
+        className="py-16 bg-black overflow-hidden"
+        aria-labelledby="work-heading"
+      >
         <div className="container px-4 md:px-6 mx-auto max-w-7xl">
           <div className="mb-10">
             <div>
-              <h2 id="work-heading" className="text-2xl font-normal mb-2 text-white">
+              <h2
+                id="work-heading"
+                className="text-2xl font-normal mb-2 text-white"
+              >
                 Selected Work
               </h2>
-              <div className="h-px w-16 bg-neutral-700" aria-hidden="true"></div>
+              <div
+                className="h-px w-16 bg-neutral-700"
+                aria-hidden="true"
+              ></div>
             </div>
           </div>
 
           {loading ? (
-            <div className="flex gap-3 overflow-hidden" aria-label="Loading videos...">
+            <div
+              className="flex gap-3 overflow-hidden"
+              aria-label="Loading videos..."
+            >
               {[1, 2, 3].map((i) => (
-                <div key={i} className="min-w-[500px] h-[350px] bg-neutral-800 animate-pulse" aria-hidden="true"></div>
+                <div
+                  key={i}
+                  className="min-w-[500px] h-[350px] bg-neutral-800 animate-pulse"
+                  aria-hidden="true"
+                ></div>
               ))}
             </div>
           ) : (
@@ -396,7 +510,7 @@ export function VideoShowcase() {
                 role="region"
                 aria-live="polite"
               >
-                {duplicatedProjects.map((project, index) => (
+                {visibleProjects.map((project, index) => (
                   <div
                     key={`${project.id}-${index}`}
                     className={`relative flex-shrink-0 overflow-hidden ${
@@ -425,7 +539,15 @@ export function VideoShowcase() {
                             <div className="absolute inset-0 w-full h-full youtube-embed-container">
                               <div className="relative w-full h-full overflow-hidden">
                                 <iframe
-                                  src={`https://www.youtube.com/embed/${project.id}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${project.id}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&disablekb=1&origin=${typeof window !== "undefined" ? window.location.origin : ""}`}
+                                  src={`https://www.youtube.com/embed/${
+                                    project.id
+                                  }?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${
+                                    project.id
+                                  }&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&disablekb=1&origin=${
+                                    typeof window !== "undefined"
+                                      ? window.location.origin
+                                      : ""
+                                  }`}
                                   title={project.title}
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                   className="absolute inset-0 w-[300%] h-[300%] left-[-100%] top-[-100%]"
@@ -434,6 +556,7 @@ export function VideoShowcase() {
                                   }}
                                   frameBorder="0"
                                   aria-hidden="true" // Hide from screen readers since it's just visual
+                                  loading="lazy"
                                 ></iframe>
                               </div>
                             </div>
@@ -444,12 +567,22 @@ export function VideoShowcase() {
                             <Image
                               src={
                                 project.thumbnailUrl ||
-                                `/placeholder.svg?height=720&width=${project.isShort ? "405" : "1280"}&query=minimal video ${project.isShort ? "short" : "editing"}`
+                                `/placeholder.svg?height=720&width=${
+                                  project.isShort ? "405" : "1280"
+                                }&query=minimal video ${
+                                  project.isShort ? "short" : "editing"
+                                }`
                               }
                               alt={`Thumbnail for ${project.title}`}
                               fill
                               className="object-cover transition-all duration-700 ease-out"
-                              priority={index < 5} // Prioritize loading the first few images
+                              priority={index < 3} // Prioritize loading only the first few images
+                              sizes={
+                                project.isShort
+                                  ? "(max-width: 768px) 197px, 197px"
+                                  : "(max-width: 768px) 100vw, 500px"
+                              }
+                              loading={index < 3 ? "eager" : "lazy"}
                             />
                           </div>
                         )}
@@ -474,7 +607,9 @@ export function VideoShowcase() {
 
                         {/* Video title */}
                         <div className="absolute bottom-0 left-0 p-4 w-full opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-500 ease-out">
-                          <h3 className="text-white text-sm font-medium line-clamp-2">{project.title}</h3>
+                          <h3 className="text-white text-sm font-medium line-clamp-2">
+                            {project.title}
+                          </h3>
                         </div>
                       </div>
                     </Link>
@@ -495,8 +630,8 @@ export function VideoShowcase() {
         </div>
       </section>
 
-      {/* Video Stats Section */}
-      {!loading && (
+      {/* Video Stats Section - Only show when API data is loaded */}
+      {apiDataLoaded && (
         <VideoStats
           totalViews={totalStats.views}
           totalLikes={totalStats.likes}
@@ -504,5 +639,5 @@ export function VideoShowcase() {
         />
       )}
     </>
-  )
+  );
 }

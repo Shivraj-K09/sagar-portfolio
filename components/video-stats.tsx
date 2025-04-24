@@ -1,83 +1,114 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Eye, ThumbsUp, Play } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Eye, ThumbsUp, Play } from "lucide-react";
 
 interface VideoStatsProps {
-  totalViews: number
-  totalLikes: number
-  totalVideos: number
+  totalViews: number;
+  totalLikes: number;
+  totalVideos: number;
 }
 
-export function VideoStats({ totalViews, totalLikes, totalVideos }: VideoStatsProps) {
-  const [animatedViews, setAnimatedViews] = useState(0)
-  const [animatedLikes, setAnimatedLikes] = useState(0)
+export function VideoStats({
+  totalViews,
+  totalLikes,
+  totalVideos,
+}: VideoStatsProps) {
+  const [animatedViews, setAnimatedViews] = useState(0);
+  const [animatedLikes, setAnimatedLikes] = useState(0);
+  const [animationStarted, setAnimationStarted] = useState(false);
 
   // Format numbers with commas
   const formatNumber = (num: number): string => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-  }
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
 
   // Format large numbers with K, M, B suffixes
   const formatCompactNumber = (num: number): string => {
     if (num >= 1000000000) {
-      return (num / 1000000000).toFixed(1).replace(/\.0$/, "") + "B"
+      return (num / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";
     }
     if (num >= 1000000) {
-      return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M"
+      return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
     }
     if (num >= 1000) {
-      return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K"
+      return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
     }
-    return num.toString()
-  }
+    return num.toString();
+  };
 
-  // Animate the counters
+  // Start animation when component is visible in viewport
   useEffect(() => {
-    const viewsDuration = 2000 // 2 seconds for the animation
-    const likesDuration = 2000
-    const viewsInterval = 20 // Update every 20ms
-    const likesInterval = 20
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !animationStarted) {
+          setAnimationStarted(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
 
-    const viewsStep = totalViews / (viewsDuration / viewsInterval)
-    const likesStep = totalLikes / (likesDuration / likesInterval)
+    const statsSection = document.getElementById("stats-section");
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
 
-    let viewsTimer: NodeJS.Timeout
-    let likesTimer: NodeJS.Timeout
+    return () => {
+      if (statsSection) {
+        observer.unobserve(statsSection);
+      }
+    };
+  }, [animationStarted]);
+
+  // Animate the counters only when visible
+  useEffect(() => {
+    if (!animationStarted) return;
+
+    const viewsDuration = 2000; // 2 seconds for the animation
+    const likesDuration = 2000;
+    const viewsInterval = 20; // Update every 20ms
+    const likesInterval = 20;
+
+    const viewsStep = totalViews / (viewsDuration / viewsInterval);
+    const likesStep = totalLikes / (likesDuration / likesInterval);
+
+    let viewsTimer: NodeJS.Timeout;
+    let likesTimer: NodeJS.Timeout;
 
     const animateViews = () => {
       setAnimatedViews((prev) => {
-        const next = prev + viewsStep
+        const next = prev + viewsStep;
         if (next >= totalViews) {
-          clearInterval(viewsTimer)
-          return totalViews
+          clearInterval(viewsTimer);
+          return totalViews;
         }
-        return Math.floor(next)
-      })
-    }
+        return Math.floor(next);
+      });
+    };
 
     const animateLikes = () => {
       setAnimatedLikes((prev) => {
-        const next = prev + likesStep
+        const next = prev + likesStep;
         if (next >= totalLikes) {
-          clearInterval(likesTimer)
-          return totalLikes
+          clearInterval(likesTimer);
+          return totalLikes;
         }
-        return Math.floor(next)
-      })
-    }
+        return Math.floor(next);
+      });
+    };
 
-    viewsTimer = setInterval(animateViews, viewsInterval)
-    likesTimer = setInterval(animateLikes, likesInterval)
+    viewsTimer = setInterval(animateViews, viewsInterval);
+    likesTimer = setInterval(animateLikes, likesInterval);
 
     return () => {
-      clearInterval(viewsTimer)
-      clearInterval(likesTimer)
-    }
-  }, [totalViews, totalLikes])
+      clearInterval(viewsTimer);
+      clearInterval(likesTimer);
+    };
+  }, [totalViews, totalLikes, animationStarted]);
 
   return (
     <section
+      id="stats-section"
       className="relative py-24 bg-white dark:bg-black text-black dark:text-white"
       aria-labelledby="stats-heading"
     >
@@ -119,16 +150,26 @@ export function VideoStats({ totalViews, totalLikes, totalVideos }: VideoStatsPr
 
               <div className="flex justify-center mb-6">
                 <div className="p-4 bg-neutral-100 dark:bg-neutral-900 rounded-full">
-                  <Eye size={32} className="text-neutral-700 dark:text-neutral-300" aria-hidden="true" />
+                  <Eye
+                    size={32}
+                    className="text-neutral-700 dark:text-neutral-300"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
 
               <div className="flex flex-col items-center">
                 <p className="text-4xl font-semibold mb-3" aria-live="polite">
-                  <span aria-hidden="true">{formatCompactNumber(animatedViews)}</span>
-                  <span className="sr-only">{formatNumber(animatedViews)} total views</span>
+                  <span aria-hidden="true">
+                    {formatCompactNumber(animatedViews)}
+                  </span>
+                  <span className="sr-only">
+                    {formatNumber(animatedViews)} total views
+                  </span>
                 </p>
-                <h3 className="text-xl font-light text-neutral-700 dark:text-neutral-300 text-center">Total Views</h3>
+                <h3 className="text-xl font-light text-neutral-700 dark:text-neutral-300 text-center">
+                  Total Views
+                </h3>
               </div>
             </div>
           </div>
@@ -147,16 +188,26 @@ export function VideoStats({ totalViews, totalLikes, totalVideos }: VideoStatsPr
 
               <div className="flex justify-center mb-6">
                 <div className="p-4 bg-neutral-100 dark:bg-neutral-900 rounded-full">
-                  <ThumbsUp size={32} className="text-neutral-700 dark:text-neutral-300" aria-hidden="true" />
+                  <ThumbsUp
+                    size={32}
+                    className="text-neutral-700 dark:text-neutral-300"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
 
               <div className="flex flex-col items-center">
                 <p className="text-4xl font-semibold mb-3" aria-live="polite">
-                  <span aria-hidden="true">{formatCompactNumber(animatedLikes)}</span>
-                  <span className="sr-only">{formatNumber(animatedLikes)} total likes</span>
+                  <span aria-hidden="true">
+                    {formatCompactNumber(animatedLikes)}
+                  </span>
+                  <span className="sr-only">
+                    {formatNumber(animatedLikes)} total likes
+                  </span>
                 </p>
-                <h3 className="text-xl font-light text-neutral-700 dark:text-neutral-300 text-center">Total Likes</h3>
+                <h3 className="text-xl font-light text-neutral-700 dark:text-neutral-300 text-center">
+                  Total Likes
+                </h3>
               </div>
             </div>
           </div>
@@ -175,7 +226,11 @@ export function VideoStats({ totalViews, totalLikes, totalVideos }: VideoStatsPr
 
               <div className="flex justify-center mb-6">
                 <div className="p-4 bg-neutral-100 dark:bg-neutral-900 rounded-full">
-                  <Play size={32} className="text-neutral-700 dark:text-neutral-300" aria-hidden="true" />
+                  <Play
+                    size={32}
+                    className="text-neutral-700 dark:text-neutral-300"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
 
@@ -184,12 +239,14 @@ export function VideoStats({ totalViews, totalLikes, totalVideos }: VideoStatsPr
                   <span aria-hidden="true">{totalVideos}</span>
                   <span className="sr-only">{totalVideos} total videos</span>
                 </p>
-                <h3 className="text-xl font-light text-neutral-700 dark:text-neutral-300 text-center">Videos</h3>
+                <h3 className="text-xl font-light text-neutral-700 dark:text-neutral-300 text-center">
+                  Videos
+                </h3>
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

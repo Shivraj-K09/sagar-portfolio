@@ -7,8 +7,14 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ["img.youtube.com"],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400, // 24 hours
     unoptimized: true,
   },
-}
+  experimental: {
+    optimizeCss: true,
+  },
+};
 
-export default nextConfig
+export default nextConfig;
