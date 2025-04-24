@@ -6,6 +6,7 @@ import Link from "next/link";
 import { fetchVideoDetails } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { VideoStats } from "@/components/video-stats";
+import { motion } from "framer-motion";
 
 // Helper function to extract video ID from YouTube URL
 function extractVideoId(url: any) {
@@ -214,6 +215,31 @@ interface VideoProject {
 
 // Preload a subset of videos initially
 const INITIAL_VISIBLE_VIDEOS = 6;
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12,
+    },
+  },
+};
 
 export function VideoShowcase() {
   const [projects, setProjects] = useState<VideoProject[]>([]);
@@ -438,6 +464,8 @@ export function VideoShowcase() {
     if (e.key === "ArrowRight") {
       e.preventDefault();
       setCurrentFocusIndex((index + 1) % visibleProjects.length);
+      e.preventDefault();
+      setCurrentFocusIndex((index + 1) % visibleProjects.length);
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       setCurrentFocusIndex(
@@ -448,13 +476,16 @@ export function VideoShowcase() {
 
   return (
     <>
-      <section
+      <motion.section
         id="work"
         className="py-16 bg-black overflow-hidden"
         aria-labelledby="work-heading"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
       >
         <div className="container px-4 md:px-6 mx-auto max-w-7xl">
-          <div className="mb-10">
+          <motion.div className="mb-10" variants={itemVariants}>
             <div>
               <h2
                 id="work-heading"
@@ -467,7 +498,7 @@ export function VideoShowcase() {
                 aria-hidden="true"
               ></div>
             </div>
-          </div>
+          </motion.div>
 
           {loading ? (
             <div
@@ -475,11 +506,12 @@ export function VideoShowcase() {
               aria-label="Loading videos..."
             >
               {[1, 2, 3].map((i) => (
-                <div
+                <motion.div
                   key={i}
                   className="min-w-[500px] h-[350px] bg-neutral-800 animate-pulse"
                   aria-hidden="true"
-                ></div>
+                  variants={itemVariants}
+                ></motion.div>
               ))}
             </div>
           ) : (
@@ -491,13 +523,14 @@ export function VideoShowcase() {
               aria-label="Video showcase carousel"
             >
               {/* Left Arrow - Increased size */}
-              <button
+              <motion.button
                 onClick={scrollLeft}
                 className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white rounded-full p-4 backdrop-blur-sm transition-all duration-200 opacity-70 hover:opacity-100 shadow-lg"
                 aria-label="Previous videos"
+                variants={itemVariants}
               >
                 <ChevronLeft size={36} aria-hidden="true" />
-              </button>
+              </motion.button>
 
               <div
                 ref={carouselRef}
@@ -511,7 +544,7 @@ export function VideoShowcase() {
                 aria-live="polite"
               >
                 {visibleProjects.map((project, index) => (
-                  <div
+                  <motion.div
                     key={`${project.id}-${index}`}
                     className={`relative flex-shrink-0 overflow-hidden ${
                       project.isShort
@@ -523,6 +556,7 @@ export function VideoShowcase() {
                     tabIndex={0}
                     onFocus={() => setCurrentFocusIndex(index)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
+                    variants={itemVariants}
                   >
                     <Link
                       href={`https://www.youtube.com/watch?v=${project.id}`}
@@ -613,31 +647,31 @@ export function VideoShowcase() {
                         </div>
                       </div>
                     </Link>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
 
               {/* Right Arrow - Increased size */}
-              <button
+              <motion.button
                 onClick={scrollRight}
                 className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white rounded-full p-4 backdrop-blur-sm transition-all duration-200 opacity-70 hover:opacity-100 shadow-lg"
                 aria-label="Next videos"
+                variants={itemVariants}
               >
                 <ChevronRight size={36} aria-hidden="true" />
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
-      </section>
+      </motion.section>
 
-      {/* Video Stats Section - Only show when API data is loaded */}
-      {apiDataLoaded && (
-        <VideoStats
-          totalViews={totalStats.views}
-          totalLikes={totalStats.likes}
-          totalVideos={PORTFOLIO_PROJECTS.length}
-        />
-      )}
+      {/* Video Stats Section - Always show with skeleton loader until data is loaded */}
+      <VideoStats
+        totalViews={totalStats.views}
+        totalLikes={totalStats.likes}
+        totalVideos={PORTFOLIO_PROJECTS.length}
+        loading={!apiDataLoaded}
+      />
     </>
   );
 }

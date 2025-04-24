@@ -5,7 +5,7 @@ import { ClapIcon } from "./icons/clap-icon";
 import { useState, useRef, useEffect } from "react";
 import type { ClapIconHandle } from "./icons/clap-icon";
 import { SocialIcons } from "./hero-section-social";
-import Link from "next/link";
+import { motion } from "framer-motion";
 
 export function HeroSection() {
   const scrollToWork = () => {
@@ -35,17 +35,46 @@ export function HeroSection() {
     clapIconRef.current?.stopAnimation();
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12,
+      },
+    },
+  };
+
   return (
-    <section
-      className="w-full min-h-[85vh] lg:min-h-[90vh] flex items-center justify-center  md:py-0"
+    <motion.section
+      className="w-full min-h-[90vh] flex items-center justify-center py-20 md:py-0"
       aria-labelledby="hero-heading"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
     >
       <div className="container px-4 md:px-6 mx-auto max-w-5xl">
         <div className="relative flex flex-col items-center text-center gap-8 p-8 md:p-12">
           {/* REC indicator in top right corner */}
-          <div
+          <motion.div
             className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center z-10"
             aria-hidden="true"
+            variants={itemVariants}
           >
             <div
               className={`w-3 h-3 rounded-full ${
@@ -53,43 +82,47 @@ export function HeroSection() {
               } mr-1.5`}
             ></div>
             <span className="text-xs font-medium text-red-600">REC</span>
-          </div>
+          </motion.div>
 
           {/* Corner Borders - Top Left */}
-          <div
+          <motion.div
             className="absolute top-0 left-0 w-[40px] h-[40px] md:w-[60px] md:h-[60px]"
             aria-hidden="true"
+            variants={itemVariants}
           >
             <div className="absolute top-0 left-0 w-[2px] h-[20px] md:h-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
             <div className="absolute top-0 left-0 h-[2px] w-[20px] md:w-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
-          </div>
+          </motion.div>
 
           {/* Corner Borders - Top Right */}
-          <div
+          <motion.div
             className="absolute top-0 right-0 w-[40px] h-[40px] md:w-[60px] md:h-[60px]"
             aria-hidden="true"
+            variants={itemVariants}
           >
             <div className="absolute top-0 right-0 w-[2px] h-[20px] md:h-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
             <div className="absolute top-0 right-0 h-[2px] w-[20px] md:w-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
-          </div>
+          </motion.div>
 
           {/* Corner Borders - Bottom Left */}
-          <div
+          <motion.div
             className="absolute bottom-0 left-0 w-[40px] h-[40px] md:w-[60px] md:h-[60px]"
             aria-hidden="true"
+            variants={itemVariants}
           >
             <div className="absolute bottom-0 left-0 w-[2px] h-[20px] md:h-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
             <div className="absolute bottom-0 left-0 h-[2px] w-[20px] md:w-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
-          </div>
+          </motion.div>
 
           {/* Corner Borders - Bottom Right */}
-          <div
+          <motion.div
             className="absolute bottom-0 right-0 w-[40px] h-[40px] md:w-[60px] md:h-[60px]"
             aria-hidden="true"
+            variants={itemVariants}
           >
             <div className="absolute bottom-0 right-0 w-[2px] h-[20px] md:h-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
             <div className="absolute bottom-0 right-0 h-[2px] w-[20px] md:w-[30px] bg-neutral-300 dark:bg-neutral-700"></div>
-          </div>
+          </motion.div>
 
           {/* Very subtle connecting lines with low opacity */}
           <div
@@ -109,19 +142,21 @@ export function HeroSection() {
             aria-hidden="true"
           ></div>
 
-          <div
+          <motion.div
             className="inline-flex items-center gap-2 text-sm font-medium tracking-wider text-neutral-500 dark:text-neutral-400 select-text cursor-pointer"
             onMouseEnter={handleVideoEditorHover}
             onMouseLeave={handleVideoEditorLeave}
             aria-hidden="true"
+            variants={itemVariants}
           >
             <ClapIcon ref={clapIconRef} size={20} />
             VIDEO EDITOR
-          </div>
+          </motion.div>
 
-          <h1
+          <motion.h1
             id="hero-heading"
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
+            variants={itemVariants}
           >
             Hi, I'm <span className="font-medium">Sagar Kadgond</span>
             <br className="hidden xs:block" />I craft compelling{" "}
@@ -139,18 +174,24 @@ export function HeroSection() {
             </span>
             <br className="hidden xs:block" />
             stories through editing.
-          </h1>
+          </motion.h1>
 
-          <p className="max-w-[600px] text-neutral-600 dark:text-neutral-300 text-base sm:text-lg font-light px-4 sm:px-0">
+          <motion.p
+            className="max-w-[600px] text-neutral-600 dark:text-neutral-300 text-base sm:text-lg font-light px-4 sm:px-0"
+            variants={itemVariants}
+          >
             Based in India, I transform raw footage into captivating visual
             narratives that evoke emotion and leave a lasting impression. My
             approach balances technical precision with artistic intuition.
-          </p>
+          </motion.p>
 
-          <div className="flex flex-col items-center gap-6">
+          <motion.div
+            className="flex flex-col items-center gap-6"
+            variants={itemVariants}
+          >
             <div className="flex gap-4">
               <Button
-                className="rounded-full px-6 font-normal cursor-pointer"
+                className="rounded-full px-6 font-normal"
                 variant="outline"
                 onClick={scrollToWork}
                 aria-label="View my work - scroll to video showcase"
@@ -161,20 +202,20 @@ export function HeroSection() {
                 className="rounded-full px-6 bg-black dark:bg-white hover:bg-black/80 dark:hover:bg-white/80 text-white dark:text-black font-normal"
                 asChild
               >
-                <Link
-                  href="https://mail.google.com/mail/?view=cm&fs=1&to=kadgonds@gmail.com"
+                <a
+                  href="mailto:kadgonds@gmail.com"
                   aria-label="Get in touch via email"
                 >
                   Get in Touch
-                </Link>
+                </a>
               </Button>
             </div>
 
             {/* Social Media Links */}
             <SocialIcons />
-          </div>
+          </motion.div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
