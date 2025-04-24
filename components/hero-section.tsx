@@ -191,7 +191,7 @@ export function HeroSection() {
           >
             <div className="flex gap-4">
               <Button
-                className="rounded-full px-6 font-normal"
+                className="rounded-full px-6 font-normal cursor-pointer"
                 variant="outline"
                 onClick={scrollToWork}
                 aria-label="View my work - scroll to video showcase"
