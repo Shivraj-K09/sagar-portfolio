@@ -121,6 +121,10 @@
   }
 }
 
+.xs\:block {
+  display: block;
+}
+
 /* Subtle film grain texture */
 .film-grain {
   position: fixed;

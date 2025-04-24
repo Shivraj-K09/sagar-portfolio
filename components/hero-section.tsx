@@ -124,7 +124,7 @@ export function HeroSection() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight"
           >
             Hi, I'm <span className="font-medium">Sagar Kadgond</span>
-            <br className="hidden sm:block" />I craft compelling{" "}
+            <br className="hidden xs:block" />I craft compelling{" "}
             <span className="relative inline-block">
               <span className="relative z-10">visual</span>
               <div
@@ -137,7 +137,7 @@ export function HeroSection() {
                 aria-hidden="true"
               ></div>
             </span>
-            <br className="hidden sm:block" />
+            <br className="hidden xs:block" />
             stories through editing.
           </h1>
 
