@@ -154,6 +154,12 @@ const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=iPhbUwPRHEw"),
+    title: "What if Revan AND Darth Bane Awakened During The Clone Wars",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -178,6 +184,7 @@ const THUMBNAIL_URLS = {
   ZxKPSctpi0E: "https://img.youtube.com/vi/ZxKPSctpi0E/hqdefault.jpg",
   lveGVl5S06k: "https://img.youtube.com/vi/lveGVl5S06k/hqdefault.jpg",
   kU0ZwzQlSFk: "https://img.youtube.com/vi/kU0ZwzQlSFk/hqdefault.jpg",
+  iPhbUwPRHEw: "https://img.youtube.com/vi/iPhbUwPRHEw/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
