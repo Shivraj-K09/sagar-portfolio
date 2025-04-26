@@ -160,6 +160,13 @@ const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://youtube.com/shorts/co54jm8eaJg"),
+    title:
+      "Pahalgam Te*ror Attack 2025 | The Ideological Assault on India&apos;s Diversity ",
+    category: "Short",
+    isShort: true,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -185,6 +192,7 @@ const THUMBNAIL_URLS = {
   lveGVl5S06k: "https://img.youtube.com/vi/lveGVl5S06k/hqdefault.jpg",
   kU0ZwzQlSFk: "https://img.youtube.com/vi/kU0ZwzQlSFk/hqdefault.jpg",
   iPhbUwPRHEw: "https://img.youtube.com/vi/iPhbUwPRHEw/hqdefault.jpg",
+  co54jm8eaJg: "https://img.youtube.com/vi/co54jm8eaJg/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
