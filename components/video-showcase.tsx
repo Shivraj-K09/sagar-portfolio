@@ -167,6 +167,12 @@ const PORTFOLIO_PROJECTS = [
     category: "Short",
     isShort: true,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=Cl28FRUmxQs"),
+    title: "What if Anakin Trusted Mace Windu and Stayed in the Jedi Temple",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -193,6 +199,7 @@ const THUMBNAIL_URLS = {
   kU0ZwzQlSFk: "https://img.youtube.com/vi/kU0ZwzQlSFk/hqdefault.jpg",
   iPhbUwPRHEw: "https://img.youtube.com/vi/iPhbUwPRHEw/hqdefault.jpg",
   co54jm8eaJg: "https://img.youtube.com/vi/co54jm8eaJg/hqdefault.jpg",
+  Cl28FRUmxQs: "https://img.youtube.com/vi/Cl28FRUmxQs/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
