@@ -173,6 +173,12 @@ const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=O5vyAsEdDSo"),
+    title: "What if Anakin Skywalker Left The Jedi Order After Killing Dooku",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -200,6 +206,7 @@ const THUMBNAIL_URLS = {
   iPhbUwPRHEw: "https://img.youtube.com/vi/iPhbUwPRHEw/hqdefault.jpg",
   co54jm8eaJg: "https://img.youtube.com/vi/co54jm8eaJg/hqdefault.jpg",
   Cl28FRUmxQs: "https://img.youtube.com/vi/Cl28FRUmxQs/hqdefault.jpg",
+  O5vyAsEdDSo: "https://img.youtube.com/vi/O5vyAsEdDSo/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
