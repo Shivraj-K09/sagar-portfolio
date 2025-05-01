@@ -185,6 +185,18 @@ const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/TFn9FPZ_NDg"),
+    title: "US job market Nancy",
+    category: "Short",
+    isShort: true,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/5k01mwI-Yxc"),
+    title: "ArthurHayes Bitcoin Nancy",
+    category: "Short",
+    isShort: true,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -214,6 +226,8 @@ const THUMBNAIL_URLS = {
   Cl28FRUmxQs: "https://img.youtube.com/vi/Cl28FRUmxQs/hqdefault.jpg",
   O5vyAsEdDSo: "https://img.youtube.com/vi/O5vyAsEdDSo/hqdefault.jpg",
   "TTnU_Bz2-v4": "https://img.youtube.com/vi/TTnU_Bz2-v4/hqdefault.jpg",
+  TFN9FPZ_NDg: "https://img.youtube.com/vi/TFN9FPZ_NDg/hqdefault.jpg",
+  "5k01mwI-Yxc": "https://img.youtube.com/vi/5k01mwI-Yxc/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
