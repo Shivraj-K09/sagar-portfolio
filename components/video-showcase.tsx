@@ -179,6 +179,12 @@ const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=TTnU_Bz2-v4"),
+    title: "What if Darth Vader MASTERED Force Drain to Regenerate His Body",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -207,6 +213,7 @@ const THUMBNAIL_URLS = {
   co54jm8eaJg: "https://img.youtube.com/vi/co54jm8eaJg/hqdefault.jpg",
   Cl28FRUmxQs: "https://img.youtube.com/vi/Cl28FRUmxQs/hqdefault.jpg",
   O5vyAsEdDSo: "https://img.youtube.com/vi/O5vyAsEdDSo/hqdefault.jpg",
+  "TTnU_Bz2-v4": "https://img.youtube.com/vi/TTnU_Bz2-v4/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
