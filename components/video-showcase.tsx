@@ -197,6 +197,12 @@ const PORTFOLIO_PROJECTS = [
     category: "Short",
     isShort: true,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=aKDSDr24gCk"),
+    title: "What if Palpatine Used Predator INSTEAD of Order 66",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Pre-define thumbnail URLs to avoid API calls
@@ -228,6 +234,7 @@ const THUMBNAIL_URLS = {
   "TTnU_Bz2-v4": "https://img.youtube.com/vi/TTnU_Bz2-v4/hqdefault.jpg",
   TFN9FPZ_NDg: "https://img.youtube.com/vi/TFN9FPZ_NDg/hqdefault.jpg",
   "5k01mwI-Yxc": "https://img.youtube.com/vi/5k01mwI-Yxc/hqdefault.jpg",
+  aKDSDr24gCk: "https://img.youtube.com/vi/aKDSDr24gCk/hqdefault.jpg",
 };
 
 // Fisher-Yates shuffle algorithm
