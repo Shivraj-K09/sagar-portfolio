@@ -81,11 +81,8 @@ export function VideoShowcase() {
   // Fetch API data in the background
   const fetchApiData = async (initialProjects: VideoProject[]) => {
     try {
-      // Only fetch first 8 videos' details to improve performance
-      const projectsToFetch = initialProjects.slice(0, 8);
-
       const updatedProjects = await Promise.all(
-        projectsToFetch.map(async (project) => {
+        initialProjects.map(async (project) => {
           try {
             const details = await fetchVideoDetails(project.id);
             return {
@@ -104,23 +101,12 @@ export function VideoShowcase() {
         })
       );
 
-      // Merge updated projects with the rest
-      const mergedProjects = [...initialProjects];
-      updatedProjects.forEach((updatedProject, index) => {
-        const projectIndex = initialProjects.findIndex(
-          (p) => p.id === updatedProject.id
-        );
-        if (projectIndex !== -1) {
-          mergedProjects[projectIndex] = updatedProject;
-        }
-      });
-
       // Calculate total views and likes
-      const totalViews = mergedProjects.reduce(
+      const totalViews = updatedProjects.reduce(
         (sum, project) => sum + (project.statistics?.viewCount || 0),
         0
       );
-      const totalLikes = mergedProjects.reduce(
+      const totalLikes = updatedProjects.reduce(
         (sum, project) => sum + (project.statistics?.likeCount || 0),
         0
       );
@@ -130,8 +116,8 @@ export function VideoShowcase() {
         likes: totalLikes,
       });
 
-      setProjects(mergedProjects);
-      setVisibleProjects(mergedProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
+      setProjects(updatedProjects);
+      setVisibleProjects(updatedProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
       setApiDataLoaded(true);
     } catch (error) {
       console.error("Error fetching project details:", error);
