@@ -74,6 +74,20 @@ export function VideoShowcase() {
     setVisibleProjects(initialProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
     setLoading(false);
 
+    // Load cached stats immediately if available
+    const cachedStats = localStorage.getItem("videoStats");
+    if (cachedStats) {
+      try {
+        const { stats, timestamp } = JSON.parse(cachedStats);
+        // Only use cache if it's less than 5 minutes old
+        if (Date.now() - timestamp < 300000) {
+          setTotalStats(stats);
+        }
+      } catch (error) {
+        console.error("Error parsing cached stats:", error);
+      }
+    }
+
     // Then fetch API data in the background
     fetchApiData(initialProjects);
   }, []);
@@ -111,10 +125,22 @@ export function VideoShowcase() {
         0
       );
 
-      setTotalStats({
+      // Update stats with a smooth transition
+      const newStats = {
         views: totalViews,
         likes: totalLikes,
-      });
+      };
+
+      setTotalStats(newStats);
+
+      // Cache the new stats
+      localStorage.setItem(
+        "videoStats",
+        JSON.stringify({
+          stats: newStats,
+          timestamp: Date.now(),
+        })
+      );
 
       setProjects(updatedProjects);
       setVisibleProjects(updatedProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
@@ -495,7 +521,7 @@ export function VideoShowcase() {
         totalViews={totalStats.views}
         totalLikes={totalStats.likes}
         totalVideos={PORTFOLIO_PROJECTS.length}
-        loading={!apiDataLoaded}
+        loading={false} // Always show stats, even if API data is still loading
       />
     </>
   );
