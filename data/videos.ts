@@ -211,6 +211,38 @@ export const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=gm56GVNYJpk"),
+    title: "What If Obi-Wan DIDN'T Survive Order 66",
+    category: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=8xGP_gnWIW0"),
+    title: "What if The Jedi Had Visions of Anakin Burning on Mustafar",
+    category: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=pmbd3ZfVFZg"),
+    title: "What if Anakin Skywalker Had The Sharingan",
+    category: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/WD2t-jV4gkM"),
+    title:
+      "Why a Major General Fasted in Kashmir During Ramadan! 🇮🇳 @MajGenYashMor",
+    category: "Short",
+    isShort: true,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/DaudFOjxnK0"),
+    title:
+      "Operation Sindoor: Symbolism, Strategy & Propaganda in India-Pakistan Conflict #indianarmy",
+    category: "Short",
+    isShort: true,
+  },
 ];
 
 // Fisher-Yates shuffle algorithm

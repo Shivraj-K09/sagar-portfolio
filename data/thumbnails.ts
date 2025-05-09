@@ -29,4 +29,8 @@ export const THUMBNAIL_URLS = {
   "5k01mwI-Yxc": "https://img.youtube.com/vi/5k01mwI-Yxc/hqdefault.jpg",
   aKDSDr24gCk: "https://img.youtube.com/vi/aKDSDr24gCk/hqdefault.jpg",
   "oGCA-yu4BwM": "https://img.youtube.com/vi/oGCA-yu4BwM/hqdefault.jpg",
+  gm56GVNYJpk: "https://img.youtube.com/vi/gm56GVNYJpk/hqdefault.jpg",
+  "8xGP_gnWIW0": "https://img.youtube.com/vi/8xGP_gnWIW0/hqdefault.jpg",
+  pmbd3ZfVFZg: "https://img.youtube.com/vi/pmbd3ZfVFZg/hqdefault.jpg",
+  "WD2t-jV4gkM": "https://img.youtube.com/vi/WD2t-jV4gkM/hqdefault.jpg",
 };
