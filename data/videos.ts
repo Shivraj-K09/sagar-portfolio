@@ -243,6 +243,18 @@ export const PORTFOLIO_PROJECTS = [
     category: "Short",
     isShort: true,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=u_wZIB5EjfM"),
+    title: "What if The Father From Mortis SAVED Anakin on Mustafar",
+    category: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=M7ir4M4VF3o"),
+    title: "From ₹30 to ₹1 Crore? The Fantasy Sports Scam You Need to Know",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Fisher-Yates shuffle algorithm
