@@ -255,6 +255,18 @@ export const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/hW_qDxCvGf0"),
+    title: "Caleb Ad Footage",
+    category: "Short",
+    isShort: true,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/kiL4Z53WMt4"),
+    title: "Trial",
+    category: "Short",
+    isShort: true,
+  },
 ];
 
 // Fisher-Yates shuffle algorithm

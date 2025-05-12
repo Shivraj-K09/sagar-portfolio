@@ -36,4 +36,6 @@ export const THUMBNAIL_URLS = {
   DaudFOjxnK0: "https://img.youtube.com/vi/DaudFOjxnK0/hqdefault.jpg",
   u_wZIB5EjfM: "https://img.youtube.com/vi/u_wZIB5EjfM/hqdefault.jpg",
   M7ir4M4VF3o: "https://img.youtube.com/vi/M7ir4M4VF3o/hqdefault.jpg",
+  hW_qDxCvGf0: "https://img.youtube.com/vi/hW_qDxCvGf0/hqdefault.jpg",
+  kiL4Z53WMt4: "https://img.youtube.com/vi/kiL4Z53WMt4/hqdefault.jpg",
 };
