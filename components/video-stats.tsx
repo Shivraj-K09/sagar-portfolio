@@ -290,7 +290,7 @@ export function VideoStats({
                   <div className="h-10 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3">
-                    <span aria-hidden="true">{totalVideos}</span>
+                    <span aria-hidden="true">{totalVideos}+</span>
                     <span className="sr-only">{totalVideos} total videos</span>
                   </p>
                 )}
