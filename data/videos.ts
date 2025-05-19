@@ -267,6 +267,12 @@ export const PORTFOLIO_PROJECTS = [
     category: "Short",
     isShort: true,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=Z4SnkHgT3aI"),
+    title: " What if Tywin's Wife DIDN'T Die in Childbirth?",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Fisher-Yates shuffle algorithm
