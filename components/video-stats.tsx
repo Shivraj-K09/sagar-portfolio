@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Eye, ThumbsUp, Play } from "lucide-react";
 import { motion } from "framer-motion";
+import { useVideoStats } from "@/hooks/use-video-data";
 
 interface VideoStatsProps {
   totalViews: number;
@@ -19,9 +20,15 @@ export function VideoStats({
   loading = false,
   skipAnimation = false,
 }: VideoStatsProps) {
+  const { stats: queryStats, isLoading: queryLoading } = useVideoStats();
   const [animatedViews, setAnimatedViews] = useState(0);
   const [animatedLikes, setAnimatedLikes] = useState(0);
   const [animationStarted, setAnimationStarted] = useState(false);
+
+  // Use query data if available, otherwise fall back to props
+  const finalViews = queryStats.views || totalViews;
+  const finalLikes = queryStats.likes || totalLikes;
+  const finalLoading = queryLoading || loading;
 
   // Format numbers with commas
   const formatNumber = (num: number): string => {
@@ -67,12 +74,12 @@ export function VideoStats({
 
   // Animate the counters only when visible
   useEffect(() => {
-    if (!animationStarted || loading) return;
+    if (!animationStarted || finalLoading) return;
 
     // If skipAnimation is true, show final numbers immediately
     if (skipAnimation) {
-      setAnimatedViews(totalViews);
-      setAnimatedLikes(totalLikes);
+      setAnimatedViews(finalViews);
+      setAnimatedLikes(finalLikes);
       return;
     }
 
@@ -82,8 +89,8 @@ export function VideoStats({
     const viewsInterval = 10; // Update every 10ms for smoother animation
     const likesInterval = 10;
 
-    const viewsStep = totalViews / (viewsDuration / viewsInterval);
-    const likesStep = totalLikes / (likesDuration / likesInterval);
+    const viewsStep = finalViews / (viewsDuration / viewsInterval);
+    const likesStep = finalLikes / (likesDuration / likesInterval);
 
     let viewsTimer: NodeJS.Timeout;
     let likesTimer: NodeJS.Timeout;
@@ -91,9 +98,9 @@ export function VideoStats({
     const animateViews = () => {
       setAnimatedViews((prev) => {
         const next = prev + viewsStep;
-        if (next >= totalViews) {
+        if (next >= finalViews) {
           clearInterval(viewsTimer);
-          return totalViews;
+          return finalViews;
         }
         return Math.floor(next);
       });
@@ -102,9 +109,9 @@ export function VideoStats({
     const animateLikes = () => {
       setAnimatedLikes((prev) => {
         const next = prev + likesStep;
-        if (next >= totalLikes) {
+        if (next >= finalLikes) {
           clearInterval(likesTimer);
-          return totalLikes;
+          return finalLikes;
         }
         return Math.floor(next);
       });
@@ -117,7 +124,7 @@ export function VideoStats({
       clearInterval(viewsTimer);
       clearInterval(likesTimer);
     };
-  }, [totalViews, totalLikes, animationStarted, loading]);
+  }, [finalViews, finalLikes, animationStarted, finalLoading, skipAnimation]);
 
   // Animation variants for Framer Motion
   const containerVariants = {
@@ -204,7 +211,7 @@ export function VideoStats({
               </div>
 
               <div className="flex flex-col items-center">
-                {loading ? (
+                {finalLoading ? (
                   <div className="h-10 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3" aria-live="polite">
@@ -250,7 +257,7 @@ export function VideoStats({
               </div>
 
               <div className="flex flex-col items-center">
-                {loading ? (
+                {finalLoading ? (
                   <div className="h-10 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3" aria-live="polite">
@@ -296,7 +303,7 @@ export function VideoStats({
               </div>
 
               <div className="flex flex-col items-center">
-                {loading ? (
+                {finalLoading ? (
                   <div className="h-10 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3">
