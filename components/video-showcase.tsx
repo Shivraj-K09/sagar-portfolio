@@ -59,10 +59,11 @@ export function VideoShowcase() {
 
   // Initialize with static thumbnails immediately
   useEffect(() => {
-    const shuffledProjects = shuffleArray(PORTFOLIO_PROJECTS);
+    // Reverse the array to show latest videos first (from end to beginning)
+    const reversedProjects = [...PORTFOLIO_PROJECTS].reverse();
 
     // Create initial projects with static thumbnails
-    const initialProjects = shuffledProjects.map((project) => ({
+    const initialProjects = reversedProjects.map((project) => ({
       ...project,
       thumbnailUrl:
         THUMBNAIL_URLS[project.id as keyof typeof THUMBNAIL_URLS] ||

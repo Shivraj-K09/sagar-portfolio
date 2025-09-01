@@ -9,6 +9,7 @@ interface VideoStatsProps {
   totalLikes: number;
   totalVideos: number;
   loading?: boolean;
+  skipAnimation?: boolean; // New prop to skip animation for instant display
 }
 
 export function VideoStats({
@@ -16,6 +17,7 @@ export function VideoStats({
   totalLikes,
   totalVideos,
   loading = false,
+  skipAnimation = false,
 }: VideoStatsProps) {
   const [animatedViews, setAnimatedViews] = useState(0);
   const [animatedLikes, setAnimatedLikes] = useState(0);
@@ -48,7 +50,7 @@ export function VideoStats({
           setAnimationStarted(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.05, rootMargin: "50px" } // Trigger earlier and with smaller threshold
     );
 
     const statsSection = document.getElementById("stats-section");
@@ -67,10 +69,18 @@ export function VideoStats({
   useEffect(() => {
     if (!animationStarted || loading) return;
 
-    const viewsDuration = 2000; // 2 seconds for the animation
-    const likesDuration = 2000;
-    const viewsInterval = 20; // Update every 20ms
-    const likesInterval = 20;
+    // If skipAnimation is true, show final numbers immediately
+    if (skipAnimation) {
+      setAnimatedViews(totalViews);
+      setAnimatedLikes(totalLikes);
+      return;
+    }
+
+    // Much faster animation - 500ms instead of 2000ms
+    const viewsDuration = 500; // 0.5 seconds for the animation
+    const likesDuration = 500;
+    const viewsInterval = 10; // Update every 10ms for smoother animation
+    const likesInterval = 10;
 
     const viewsStep = totalViews / (viewsDuration / viewsInterval);
     const likesStep = totalLikes / (likesDuration / likesInterval);

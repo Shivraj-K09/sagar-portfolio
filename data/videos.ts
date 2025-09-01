@@ -273,6 +273,95 @@ export const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/npmwj8A0YIU"),
+    title: "Can Centre Use ED/CBI to Remove State Leaders?",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=EolUCdsWKV0"),
+    title: "Intro Edit",
+    category: "Video",
+    isShort: false,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=d3QlFGzswyk"),
+    title: "Intro Edit",
+    category: "Video",
+    isShort: false,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/lf35eUkx29w"),
+    title: "Intro Edit",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/kUEoyNBj1E0"),
+    title: "Intro Edit",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/dyDoNw_o70E"),
+    title: "Intro Edit",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/7CeqsUDpBO8"),
+    title: "Intro Edit",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/iYQIcmZWYUI"),
+    title:
+      "Rahul Gandhi vs Election Commission Over Voter Fraud #electioncommission",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/shorts/L8PjtY4aifU"),
+    title:
+      "Why Classroom Design Reveals the Power Structure of Society #shorts",
+    category: "Short",
+    isShort: true,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=wceKILQdPz4"),
+    title:
+      "Rahul Gandhi vs Election Commission | Breaking Down Rahul Gandhi&apos;s &quot;Vote Chori&quot; Allegations",
+    category: "Video",
+    isShort: false,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=8wwmbHpUM2s"),
+    title:
+      "Operation Sindoor Debate: Why Priyanka Gandhi&apos;s Parliament Speech was a Masterclass in Storytelling",
+    category: "Video",
+    isShort: false,
+  },
+
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=ZzgqCBiwjKQ"),
+    title:
+      "New Bill to Remove PM & CMs After 30 Days | Threat or Reform? The New Law Explained",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Fisher-Yates shuffle algorithm
