@@ -3,14 +3,12 @@
 import { useState, useEffect } from "react";
 import { Eye, ThumbsUp, Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { useVideoStats } from "@/hooks/use-video-data";
 
 interface VideoStatsProps {
   totalViews: number;
   totalLikes: number;
   totalVideos: number;
   loading?: boolean;
-  skipAnimation?: boolean; // New prop to skip animation for instant display
 }
 
 export function VideoStats({
@@ -18,17 +16,10 @@ export function VideoStats({
   totalLikes,
   totalVideos,
   loading = false,
-  skipAnimation = false,
 }: VideoStatsProps) {
-  const { stats: queryStats, isLoading: queryLoading } = useVideoStats();
   const [animatedViews, setAnimatedViews] = useState(0);
   const [animatedLikes, setAnimatedLikes] = useState(0);
   const [animationStarted, setAnimationStarted] = useState(false);
-
-  // Use query data if available, otherwise fall back to props
-  const finalViews = queryStats.views || totalViews;
-  const finalLikes = queryStats.likes || totalLikes;
-  const finalLoading = queryLoading || loading;
 
   // Format numbers with commas
   const formatNumber = (num: number): string => {
@@ -57,7 +48,7 @@ export function VideoStats({
           setAnimationStarted(true);
         }
       },
-      { threshold: 0.05, rootMargin: "50px" } // Trigger earlier and with smaller threshold
+      { threshold: 0.1 }
     );
 
     const statsSection = document.getElementById("stats-section");
@@ -74,23 +65,15 @@ export function VideoStats({
 
   // Animate the counters only when visible
   useEffect(() => {
-    if (!animationStarted || finalLoading) return;
+    if (!animationStarted || loading) return;
 
-    // If skipAnimation is true, show final numbers immediately
-    if (skipAnimation) {
-      setAnimatedViews(finalViews);
-      setAnimatedLikes(finalLikes);
-      return;
-    }
+    const viewsDuration = 2000; // 2 seconds for the animation
+    const likesDuration = 2000;
+    const viewsInterval = 20; // Update every 20ms
+    const likesInterval = 20;
 
-    // Much faster animation - 500ms instead of 2000ms
-    const viewsDuration = 500; // 0.5 seconds for the animation
-    const likesDuration = 500;
-    const viewsInterval = 10; // Update every 10ms for smoother animation
-    const likesInterval = 10;
-
-    const viewsStep = finalViews / (viewsDuration / viewsInterval);
-    const likesStep = finalLikes / (likesDuration / likesInterval);
+    const viewsStep = totalViews / (viewsDuration / viewsInterval);
+    const likesStep = totalLikes / (likesDuration / likesInterval);
 
     let viewsTimer: NodeJS.Timeout;
     let likesTimer: NodeJS.Timeout;
@@ -98,9 +81,9 @@ export function VideoStats({
     const animateViews = () => {
       setAnimatedViews((prev) => {
         const next = prev + viewsStep;
-        if (next >= finalViews) {
+        if (next >= totalViews) {
           clearInterval(viewsTimer);
-          return finalViews;
+          return totalViews;
         }
         return Math.floor(next);
       });
@@ -109,9 +92,9 @@ export function VideoStats({
     const animateLikes = () => {
       setAnimatedLikes((prev) => {
         const next = prev + likesStep;
-        if (next >= finalLikes) {
+        if (next >= totalLikes) {
           clearInterval(likesTimer);
-          return finalLikes;
+          return totalLikes;
         }
         return Math.floor(next);
       });
@@ -124,7 +107,7 @@ export function VideoStats({
       clearInterval(viewsTimer);
       clearInterval(likesTimer);
     };
-  }, [finalViews, finalLikes, animationStarted, finalLoading, skipAnimation]);
+  }, [totalViews, totalLikes, animationStarted, loading]);
 
   // Animation variants for Framer Motion
   const containerVariants = {
@@ -211,7 +194,7 @@ export function VideoStats({
               </div>
 
               <div className="flex flex-col items-center">
-                {finalLoading ? (
+                {loading ? (
                   <div className="h-10 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3" aria-live="polite">
@@ -257,7 +240,7 @@ export function VideoStats({
               </div>
 
               <div className="flex flex-col items-center">
-                {finalLoading ? (
+                {loading ? (
                   <div className="h-10 w-24 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3" aria-live="polite">
@@ -303,7 +286,7 @@ export function VideoStats({
               </div>
 
               <div className="flex flex-col items-center">
-                {finalLoading ? (
+                {loading ? (
                   <div className="h-10 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-3"></div>
                 ) : (
                   <p className="text-4xl font-semibold mb-3">

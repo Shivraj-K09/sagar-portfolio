@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { fetchBatchVideoDetails } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { VideoStats } from "@/components/video-stats";
 import { motion } from "framer-motion";
 import { useMobile } from "@/hooks/use-mobile";
-import { useVideoData, useVideoStats } from "@/hooks/use-video-data";
-import { VideoProject } from "@/data/videos";
+import { PORTFOLIO_PROJECTS, VideoProject, shuffleArray } from "@/data/videos";
+import { THUMBNAIL_URLS } from "@/data/thumbnails";
 
 // Preload a subset of videos initially
 const INITIAL_VISIBLE_VIDEOS = 6;
@@ -40,23 +41,181 @@ const itemVariants = {
 
 export function VideoShowcase() {
   const isMobile = useMobile();
-  const { data: projects = [], isLoading, error } = useVideoData();
-  const { stats, totalVideos } = useVideoStats();
+  const [projects, setProjects] = useState<VideoProject[]>([]);
   const [visibleProjects, setVisibleProjects] = useState<VideoProject[]>([]);
+  const [loading, setLoading] = useState(true);
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeftPos, setScrollLeftPos] = useState(0);
+  const [totalStats, setTotalStats] = useState({
+    views: 0,
+    likes: 0,
+  });
   const [currentFocusIndex, setCurrentFocusIndex] = useState(-1);
+  const [apiDataLoaded, setApiDataLoaded] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
 
-  // Update visible projects when data is loaded
+  // Initialize with static thumbnails immediately
   useEffect(() => {
-    if (projects.length > 0) {
-      setVisibleProjects(projects.slice(0, INITIAL_VISIBLE_VIDEOS));
+    // Reverse the array to show latest videos first (from end to beginning)
+    const reversedProjects = [...PORTFOLIO_PROJECTS].reverse();
+
+    // Create initial projects with static thumbnails
+    const initialProjects = reversedProjects.map((project) => ({
+      ...project,
+      thumbnailUrl:
+        THUMBNAIL_URLS[project.id as keyof typeof THUMBNAIL_URLS] ||
+        `https://img.youtube.com/vi/${project.id}/hqdefault.jpg`,
+      statistics: { viewCount: 0, likeCount: 0 },
+    }));
+
+    setProjects(initialProjects);
+    setVisibleProjects(initialProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
+    setLoading(false);
+
+    // Load cached stats immediately if available
+    const cachedStats = localStorage.getItem("videoStats");
+    if (cachedStats) {
+      try {
+        const { stats, timestamp } = JSON.parse(cachedStats);
+        // Only use cache if it's less than 5 minutes old
+        if (Date.now() - timestamp < 300000) {
+          setTotalStats(stats);
+        }
+      } catch (error) {
+        console.error("Error parsing cached stats:", error);
+      }
     }
-  }, [projects]);
+
+    // Then fetch API data in the background
+    fetchApiData(initialProjects);
+  }, []);
+
+  // Fetch API data in the background using batch requests
+  const fetchApiData = async (initialProjects: VideoProject[]) => {
+    // Prevent multiple simultaneous requests
+    if (isFetching) return;
+    setIsFetching(true);
+
+    try {
+      // Check if we have recent cached data (less than 1 hour old)
+      const cachedData = localStorage.getItem("videoApiData");
+      if (cachedData) {
+        try {
+          const { data, timestamp } = JSON.parse(cachedData);
+          // Use cache if it's less than 1 hour old
+          if (Date.now() - timestamp < 3600000) {
+            const updatedProjects = initialProjects.map((project) => {
+              const cachedProject = data.find((d: any) => d.id === project.id);
+              return {
+                ...project,
+                title: cachedProject?.title || project.title,
+                thumbnailUrl:
+                  cachedProject?.thumbnails?.maxres?.url ||
+                  cachedProject?.thumbnails?.high?.url ||
+                  project.thumbnailUrl,
+                statistics: cachedProject?.statistics || {
+                  viewCount: 0,
+                  likeCount: 0,
+                },
+              };
+            });
+
+            // Calculate and update stats
+            const totalViews = updatedProjects.reduce(
+              (sum, project) => sum + (project.statistics?.viewCount || 0),
+              0
+            );
+            const totalLikes = updatedProjects.reduce(
+              (sum, project) => sum + (project.statistics?.likeCount || 0),
+              0
+            );
+
+            setTotalStats({ views: totalViews, likes: totalLikes });
+            setProjects(updatedProjects);
+            setVisibleProjects(
+              updatedProjects.slice(0, INITIAL_VISIBLE_VIDEOS)
+            );
+            setApiDataLoaded(true);
+            setIsFetching(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Error parsing cached API data:", error);
+        }
+      }
+
+      // Extract all video IDs for batch request
+      const videoIds = initialProjects
+        .map((project) => project.id)
+        .filter(Boolean);
+
+      // Fetch all video details in a single batch request
+      const batchDetails = await fetchBatchVideoDetails(videoIds);
+
+      // Create a map for quick lookup
+      const detailsMap = new Map(
+        batchDetails.map((detail) => [detail.id, detail])
+      );
+
+      // Update projects with fetched data
+      const updatedProjects = initialProjects.map((project) => {
+        const details = detailsMap.get(project.id);
+        return {
+          ...project,
+          title: details?.title || project.title,
+          thumbnailUrl:
+            details?.thumbnails?.maxres?.url ||
+            details?.thumbnails?.high?.url ||
+            project.thumbnailUrl,
+          statistics: details?.statistics || { viewCount: 0, likeCount: 0 },
+        };
+      });
+
+      // Calculate total views and likes
+      const totalViews = updatedProjects.reduce(
+        (sum, project) => sum + (project.statistics?.viewCount || 0),
+        0
+      );
+      const totalLikes = updatedProjects.reduce(
+        (sum, project) => sum + (project.statistics?.likeCount || 0),
+        0
+      );
+
+      // Update stats
+      const newStats = { views: totalViews, likes: totalLikes };
+      setTotalStats(newStats);
+
+      // Cache the API data for 1 hour
+      localStorage.setItem(
+        "videoApiData",
+        JSON.stringify({
+          data: batchDetails,
+          timestamp: Date.now(),
+        })
+      );
+
+      // Cache the stats separately
+      localStorage.setItem(
+        "videoStats",
+        JSON.stringify({
+          stats: newStats,
+          timestamp: Date.now(),
+        })
+      );
+
+      setProjects(updatedProjects);
+      setVisibleProjects(updatedProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
+      setApiDataLoaded(true);
+    } catch (error) {
+      console.error("Error fetching project details:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   // Load more videos as user scrolls
   const loadMoreVideos = useCallback(() => {
@@ -73,7 +232,7 @@ export function VideoShowcase() {
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (autoScroll && !isDragging && !isLoading) {
+    if (autoScroll && !isDragging && !loading) {
       interval = setInterval(() => {
         if (carouselRef.current) {
           carouselRef.current.scrollLeft += 2;
@@ -102,7 +261,7 @@ export function VideoShowcase() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoScroll, isDragging, isLoading, loadMoreVideos]);
+  }, [autoScroll, isDragging, loading, loadMoreVideos]);
 
   // Mouse event handlers for drag scrolling
   function handleMouseDown(event: any) {
@@ -227,7 +386,7 @@ export function VideoShowcase() {
             </div>
           </motion.div>
 
-          {isLoading ? (
+          {loading ? (
             <div
               className="flex gap-3 overflow-hidden"
               aria-label="Loading videos..."
@@ -426,9 +585,9 @@ export function VideoShowcase() {
 
       {/* Video Stats Section - Always show with skeleton loader until data is loaded */}
       <VideoStats
-        totalViews={stats.views}
-        totalLikes={stats.likes}
-        totalVideos={totalVideos}
+        totalViews={totalStats.views}
+        totalLikes={totalStats.likes}
+        totalVideos={PORTFOLIO_PROJECTS.length}
         loading={false} // Always show stats, even if API data is still loading
       />
     </>

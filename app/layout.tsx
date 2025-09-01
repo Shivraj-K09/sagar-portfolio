@@ -2,7 +2,6 @@ import type React from "react";
 import "@/app/globals.css";
 import { Geist, Dancing_Script } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { QueryProvider } from "@/components/providers/query-provider";
 import { FilmGrain } from "@/components/film-grain";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -123,18 +122,16 @@ export default function RootLayout({
         <link rel="canonical" href="https://sagarcuts.vercel.app" />
       </head>
       <body className={`${geist.className} ${dancingScript.variable}`}>
-        <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <FilmGrain />
-            <Analytics />
-          </ThemeProvider>
-        </QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <FilmGrain />
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );
