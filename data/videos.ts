@@ -362,6 +362,27 @@ export const PORTFOLIO_PROJECTS = [
     category: "Video",
     isShort: false,
   },
+  {
+    id: extractVideoId("https://youtu.be/_pa1BzTXfOw?si=5J2t5SYjMjLE_gv9"),
+    title:
+      "Indian Caste System EXPOSED | Privilege, Reservation & Hidden Truths| Lakshay L |Cazual Talk Podcast",
+    category: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://youtu.be/Wqn9TGGLUzU?si=JryCKSu2iekOC4y5"),
+    title:
+      "Stop Chasing Jobs | Build Value, Earn While Learning | Cazual Talk with Prof Prasad T - Mandi Sir",
+    category: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://youtu.be/fTAePc_Do7I?si=UIdxuT6ZcXFIx_xR"),
+    title:
+      "SSC Exam 2025 Scandal: Mismanagement, Protests & Teacher Arrests |Neetu Ma'am x Vijender Sir Podcast",
+    category: "Video",
+    isShort: false,
+  },
 ];
 
 // Fisher-Yates shuffle algorithm
