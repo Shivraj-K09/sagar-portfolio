@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchBatchVideoDetails } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { VideoStats } from "@/components/video-stats";
+import { WorkTabs } from "@/components/work-tabs";
 import { motion } from "framer-motion";
 import { useMobile } from "@/hooks/use-mobile";
 import { PORTFOLIO_PROJECTS, VideoProject, shuffleArray } from "@/data/videos";
@@ -32,7 +33,7 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 12,
     },
@@ -57,11 +58,81 @@ export function VideoShowcase() {
   const [currentFocusIndex, setCurrentFocusIndex] = useState(-1);
   const [apiDataLoaded, setApiDataLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const TABS = ["Shorts", "Long Videos", "Podcast"] as const;
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const activeTab = TABS[activeTabIndex];
+
+  // Persist scroll position and visible count per tab
+  const tabStateRef = useRef<Record<string, { scrollLeft: number; visibleCount: number }>>({});
+
+  // Filter and shuffle projects by active tab (random order in carousel)
+  const filteredProjects = useMemo(() => {
+    let filtered: VideoProject[];
+    switch (activeTab) {
+      case "Shorts":
+        filtered = projects.filter((p) => p.isShort === true);
+        break;
+      case "Long Videos":
+        filtered = projects.filter((p) => p.isShort === false && !p.isPodcast);
+        break;
+      case "Podcast":
+        filtered = projects.filter((p) => p.isPodcast === true);
+        break;
+      default:
+        filtered = projects;
+    }
+    return shuffleArray(filtered);
+  }, [projects, activeTab]);
+
+  // Save current tab state before switching, restore when switching to a tab
+  const handleTabChange = useCallback(
+    (newIndex: number) => {
+      const currentTab = TABS[activeTabIndex];
+      tabStateRef.current[currentTab] = {
+        scrollLeft: carouselRef.current?.scrollLeft ?? 0,
+        visibleCount: visibleProjects.length,
+      };
+      setActiveTabIndex(newIndex);
+    },
+    [activeTabIndex, visibleProjects.length]
+  );
+
+  // Update visible projects when tab or filtered list changes
+  const prevActiveTabIndexRef = useRef(activeTabIndex);
+  useEffect(() => {
+    if (prevActiveTabIndexRef.current !== activeTabIndex) {
+      const newTab = TABS[activeTabIndex];
+      const savedState = tabStateRef.current[newTab];
+
+      if (savedState) {
+        setVisibleProjects(filteredProjects.slice(0, savedState.visibleCount));
+        requestAnimationFrame(() => {
+          if (carouselRef.current) {
+            carouselRef.current.scrollLeft = savedState.scrollLeft;
+          }
+        });
+      } else {
+        setVisibleProjects(filteredProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
+      }
+
+      prevActiveTabIndexRef.current = activeTabIndex;
+    } else {
+      setVisibleProjects((prev) => {
+        const count = Math.max(prev.length, INITIAL_VISIBLE_VIDEOS);
+        const newVisible = filteredProjects.slice(0, count);
+        return newVisible.length > 0 ? newVisible : prev;
+      });
+    }
+  }, [activeTabIndex, filteredProjects]);
+
 
   // Initialize with static thumbnails immediately
   useEffect(() => {
     // Reverse the array to show latest videos first (from end to beginning)
-    const reversedProjects = [...PORTFOLIO_PROJECTS].reverse();
+    // Filter out projects with invalid/missing video IDs
+    const reversedProjects = [...PORTFOLIO_PROJECTS]
+      .filter((p) => p.id)
+      .reverse();
 
     // Create initial projects with static thumbnails
     const initialProjects = reversedProjects.map((project) => ({
@@ -73,7 +144,6 @@ export function VideoShowcase() {
     }));
 
     setProjects(initialProjects);
-    setVisibleProjects(initialProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
     setLoading(false);
 
     // Load cached stats immediately if available
@@ -127,17 +197,17 @@ export function VideoShowcase() {
             // Calculate and update stats
             const totalViews = updatedProjects.reduce(
               (sum, project) => sum + (project.statistics?.viewCount || 0),
-              0
+              0,
             );
             const totalLikes = updatedProjects.reduce(
               (sum, project) => sum + (project.statistics?.likeCount || 0),
-              0
+              0,
             );
 
             setTotalStats({ views: totalViews, likes: totalLikes });
             setProjects(updatedProjects);
             setVisibleProjects(
-              updatedProjects.slice(0, INITIAL_VISIBLE_VIDEOS)
+              updatedProjects.slice(0, INITIAL_VISIBLE_VIDEOS),
             );
             setApiDataLoaded(true);
             setIsFetching(false);
@@ -158,7 +228,7 @@ export function VideoShowcase() {
 
       // Create a map for quick lookup
       const detailsMap = new Map(
-        batchDetails.map((detail) => [detail.id, detail])
+        batchDetails.map((detail) => [detail.id, detail]),
       );
 
       // Update projects with fetched data
@@ -178,11 +248,11 @@ export function VideoShowcase() {
       // Calculate total views and likes
       const totalViews = updatedProjects.reduce(
         (sum, project) => sum + (project.statistics?.viewCount || 0),
-        0
+        0,
       );
       const totalLikes = updatedProjects.reduce(
         (sum, project) => sum + (project.statistics?.likeCount || 0),
-        0
+        0,
       );
 
       // Update stats
@@ -195,7 +265,7 @@ export function VideoShowcase() {
         JSON.stringify({
           data: batchDetails,
           timestamp: Date.now(),
-        })
+        }),
       );
 
       // Cache the stats separately
@@ -204,7 +274,7 @@ export function VideoShowcase() {
         JSON.stringify({
           stats: newStats,
           timestamp: Date.now(),
-        })
+        }),
       );
 
       setProjects(updatedProjects);
@@ -217,16 +287,16 @@ export function VideoShowcase() {
     }
   };
 
-  // Load more videos as user scrolls
+  // Load more videos as user scrolls (uses filtered list for current tab)
   const loadMoreVideos = useCallback(() => {
-    if (visibleProjects.length < projects.length) {
-      const nextBatch = projects.slice(
+    if (visibleProjects.length < filteredProjects.length) {
+      const nextBatch = filteredProjects.slice(
         visibleProjects.length,
-        visibleProjects.length + 3
+        visibleProjects.length + 3,
       );
       setVisibleProjects((prev) => [...prev, ...nextBatch]);
     }
-  }, [visibleProjects.length, projects]);
+  }, [visibleProjects.length, filteredProjects]);
 
   // Auto-scroll functionality
   useEffect(() => {
@@ -347,7 +417,7 @@ export function VideoShowcase() {
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       setCurrentFocusIndex(
-        (index - 1 + visibleProjects.length) % visibleProjects.length
+        (index - 1 + visibleProjects.length) % visibleProjects.length,
       );
     }
   };
@@ -366,13 +436,13 @@ export function VideoShowcase() {
         id="work"
         className="py-16 bg-black overflow-hidden"
         aria-labelledby="work-heading"
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={containerVariants}
       >
         <div className="container px-4 md:px-6 mx-auto max-w-7xl">
           <motion.div className="mb-10" variants={itemVariants}>
-            <div>
+            {/* <div>
               <h2
                 id="work-heading"
                 className="text-2xl font-normal mb-2 text-white"
@@ -383,7 +453,13 @@ export function VideoShowcase() {
                 className="h-px w-16 bg-neutral-700"
                 aria-hidden="true"
               ></div>
-            </div>
+            </div> */}
+            <WorkTabs
+              tabs={[...TABS]}
+              activeIndex={activeTabIndex}
+              onTabChange={handleTabChange}
+              className="mt-6"
+            />
           </motion.div>
 
           {loading ? (
@@ -432,6 +508,7 @@ export function VideoShowcase() {
                 {visibleProjects.map((project, index) => (
                   <motion.div
                     key={`${project.id}-${index}`}
+                    initial={false}
                     className={`relative flex-shrink-0 overflow-hidden ${
                       project.isShort
                         ? "min-w-[197px] h-[350px]" // Vertical aspect ratio (9:16)

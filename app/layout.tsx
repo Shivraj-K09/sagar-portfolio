@@ -121,7 +121,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="canonical" href="https://sagarcuts.vercel.app" />
       </head>
-      <body className={`${geist.className} ${dancingScript.variable}`}>
+      <body
+        className={`${geist.className} ${dancingScript.variable}`}
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

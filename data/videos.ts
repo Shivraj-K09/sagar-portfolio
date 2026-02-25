@@ -26,6 +26,7 @@ export interface VideoProject {
   category: string;
   year?: string;
   isShort?: boolean;
+  isPodcast?: boolean; // Optional - add only for podcast videos
   thumbnailUrl?: string;
   statistics?: {
     viewCount: number;
@@ -368,6 +369,7 @@ export const PORTFOLIO_PROJECTS = [
       "Indian Caste System EXPOSED | Privilege, Reservation & Hidden Truths| Lakshay L |Cazual Talk Podcast",
     category: "Video",
     isShort: false,
+    isPodcast: true,
   },
   {
     id: extractVideoId("https://youtu.be/Wqn9TGGLUzU?si=JryCKSu2iekOC4y5"),
@@ -382,6 +384,14 @@ export const PORTFOLIO_PROJECTS = [
       "SSC Exam 2025 Scandal: Mismanagement, Protests & Teacher Arrests |Neetu Ma'am x Vijender Sir Podcast",
     category: "Video",
     isShort: false,
+  },
+
+  {
+    id: extractVideoId("https://youtu.be/kdV9w2ELkLA?si=iEpzDPIzMVl2Tfda"),
+    title: "Podcast",
+    category: "Podcast",
+    isShort: false,
+    isPodcast: true,
   },
 ];
 
