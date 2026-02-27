@@ -344,14 +344,17 @@ export function VideoShowcase() {
   const singleSetWidthRef = useRef(0);
 
   useEffect(() => {
-    const el = firstSetRef.current;
-    if (!el) return;
     const measure = () => {
-      singleSetWidthRef.current = el.offsetWidth;
+      const el = firstSetRef.current;
+      if (!el) return;
+      // Measure full width including margins
+      const style = getComputedStyle(el);
+      const marginRight = parseFloat(style.marginRight) || 0;
+      singleSetWidthRef.current = el.offsetWidth + marginRight;
     };
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(el);
+    if (firstSetRef.current) ro.observe(firstSetRef.current);
     return () => ro.disconnect();
   }, [visibleProjects]);
 
@@ -361,31 +364,31 @@ export function VideoShowcase() {
     const setWidth = singleSetWidthRef.current;
     if (!el || setWidth <= 0) return;
 
-    // gap-3 = 12px between the two sets
-    const resetPoint = setWidth + 12;
-    if (el.scrollLeft >= resetPoint) {
-      el.scrollLeft -= resetPoint;
+    if (el.scrollLeft >= setWidth) {
+      el.scrollLeft -= setWidth;
     }
   }, []);
 
   // Auto-scroll with requestAnimationFrame for smoothness
+  const autoScrollRef = useRef(autoScroll);
+  const isDraggingRef = useRef(isDragging);
+  const loadingRef = useRef(loading);
+  useEffect(() => { autoScrollRef.current = autoScroll; }, [autoScroll]);
+  useEffect(() => { isDraggingRef.current = isDragging; }, [isDragging]);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+
   useEffect(() => {
     let animId: number;
     let lastTime = 0;
-    const speed = 2; // px per frame at 60fps — increase for faster, decrease for slower
+    const speed = 1.5; // px per frame at 60fps — increase for faster, decrease for slower
 
     const step = (time: number) => {
-      if (!autoScroll || isDragging || loading) {
-        animId = requestAnimationFrame(step);
-        lastTime = time;
-        return;
-      }
-
-      if (lastTime) {
+      if (autoScrollRef.current && !isDraggingRef.current && !loadingRef.current && lastTime) {
         const delta = time - lastTime;
-        const px = speed * (delta / 16.67); // Normalize to ~60fps
-        if (carouselRef.current) {
-          carouselRef.current.scrollLeft += px;
+        const px = speed * (delta / 16.67);
+        const el = carouselRef.current;
+        if (el) {
+          el.scrollLeft += px;
           checkAndResetScroll();
         }
       }
@@ -396,7 +399,7 @@ export function VideoShowcase() {
 
     animId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(animId);
-  }, [autoScroll, isDragging, loading, checkAndResetScroll]);
+  }, [checkAndResetScroll]);
 
   // Mouse event handlers for drag scrolling
   function handleMouseDown(event: any) {
@@ -546,7 +549,7 @@ export function VideoShowcase() {
               <div
                 ref={carouselRef}
                 className="flex overflow-x-scroll scrollbar-hide cursor-grab active:cursor-grabbing"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none", overscrollBehavior: "none" }}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
@@ -560,7 +563,7 @@ export function VideoShowcase() {
                   <div
                     key={setIdx}
                     ref={setIdx === 0 ? firstSetRef : undefined}
-                    className={`flex gap-3 shrink-0 ${setIdx === 0 ? "pl-16" : "ml-3 pr-16"}`}
+                    className="flex gap-3 shrink-0 mr-3"
                   >
                     {visibleProjects.map((project, index) => (
                       <motion.div
