@@ -384,6 +384,7 @@ export const PORTFOLIO_PROJECTS = [
       "SSC Exam 2025 Scandal: Mismanagement, Protests & Teacher Arrests |Neetu Ma'am x Vijender Sir Podcast",
     category: "Video",
     isShort: false,
+    isPodcast: true,
   },
 
   {
@@ -393,7 +394,33 @@ export const PORTFOLIO_PROJECTS = [
     isShort: false,
     isPodcast: true,
   },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=hRhgghJsqJ8"),
+    title: "Video",
+    isShort: false,
+  },
+  {
+    id: extractVideoId("https://www.youtube.com/watch?v=vHnTuahD5oA"),
+    title: "Video",
+    isShort: false,
+  },
 ];
+
+/** Shorts tab: these IDs always show first (in this order), then rest shuffled */
+export const SHORTS_PRIORITY_IDS = [
+  "7CeqsUDpBO8",
+  "lf35eUkx29w",
+  "kiL4Z53WMt4",
+  "5k01mwI-Yxc",
+] as const;
+
+/** Long Videos tab: these IDs always show first (in this order), then rest shuffled */
+export const LONG_VIDEOS_PRIORITY_IDS = [
+  "d3QlFGzswyk",
+  "EolUCdsWKV0",
+  "vHnTuahD5oA",
+  "hRhgghJsqJ8",
+] as const;
 
 // Fisher-Yates shuffle algorithm
 export function shuffleArray<T>(array: T[]): T[] {

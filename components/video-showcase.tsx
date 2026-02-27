@@ -9,7 +9,13 @@ import { VideoStats } from "@/components/video-stats";
 import { WorkTabs } from "@/components/work-tabs";
 import { motion } from "framer-motion";
 import { useMobile } from "@/hooks/use-mobile";
-import { PORTFOLIO_PROJECTS, VideoProject, shuffleArray } from "@/data/videos";
+import {
+  PORTFOLIO_PROJECTS,
+  VideoProject,
+  shuffleArray,
+  SHORTS_PRIORITY_IDS,
+  LONG_VIDEOS_PRIORITY_IDS,
+} from "@/data/videos";
 import { THUMBNAIL_URLS } from "@/data/thumbnails";
 
 // Preload a subset of videos initially
@@ -62,26 +68,83 @@ export function VideoShowcase() {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const activeTab = TABS[activeTabIndex];
 
-  // Persist scroll position and visible count per tab
-  const tabStateRef = useRef<Record<string, { scrollLeft: number; visibleCount: number }>>({});
+  // Persist scroll position per tab
+  const tabStateRef = useRef<Record<string, { scrollLeft: number }>>({});
 
-  // Filter and shuffle projects by active tab (random order in carousel)
+  // Store shuffled order per tab - only shuffle once per page load, then keep same order
+  const tabOrderRef = useRef<Record<string, string[]>>({});
+
+  const sortByStoredOrder = (items: VideoProject[], order: string[]) => {
+    const orderMap = new Map(order.map((id, i) => [id, i]));
+    return [...items].sort((a, b) => {
+      const aIdx = orderMap.has(a.id) ? orderMap.get(a.id)! : 9999;
+      const bIdx = orderMap.has(b.id) ? orderMap.get(b.id)! : 9999;
+      return aIdx - bIdx;
+    });
+  };
+
+  // Filter and shuffle projects by active tab - shuffle only on first load, priority always first
   const filteredProjects = useMemo(() => {
-    let filtered: VideoProject[];
     switch (activeTab) {
-      case "Shorts":
-        filtered = projects.filter((p) => p.isShort === true);
-        break;
-      case "Long Videos":
-        filtered = projects.filter((p) => p.isShort === false && !p.isPodcast);
-        break;
-      case "Podcast":
-        filtered = projects.filter((p) => p.isPodcast === true);
-        break;
+      case "Shorts": {
+        const shorts = projects.filter((p) => p.isShort === true);
+        const priority = SHORTS_PRIORITY_IDS.map((id) =>
+          shorts.find((p) => p.id === id),
+        ).filter(Boolean) as VideoProject[];
+        const rest = shorts.filter(
+          (p) =>
+            !SHORTS_PRIORITY_IDS.includes(
+              p.id as (typeof SHORTS_PRIORITY_IDS)[number],
+            ),
+        );
+        if (rest.length === 0) return priority;
+        if (!tabOrderRef.current["Shorts"]?.length) {
+          const shuffled = shuffleArray(rest);
+          tabOrderRef.current["Shorts"] = shuffled.map((p) => p.id);
+          return [...priority, ...shuffled];
+        }
+        return [
+          ...priority,
+          ...sortByStoredOrder(rest, tabOrderRef.current["Shorts"]),
+        ];
+      }
+      case "Long Videos": {
+        const longVideos = projects.filter(
+          (p) => p.isShort === false && !p.isPodcast,
+        );
+        const priority = LONG_VIDEOS_PRIORITY_IDS.map((id) =>
+          longVideos.find((p) => p.id === id),
+        ).filter(Boolean) as VideoProject[];
+        const rest = longVideos.filter(
+          (p) =>
+            !LONG_VIDEOS_PRIORITY_IDS.includes(
+              p.id as (typeof LONG_VIDEOS_PRIORITY_IDS)[number],
+            ),
+        );
+        if (rest.length === 0) return priority;
+        if (!tabOrderRef.current["Long Videos"]?.length) {
+          const shuffled = shuffleArray(rest);
+          tabOrderRef.current["Long Videos"] = shuffled.map((p) => p.id);
+          return [...priority, ...shuffled];
+        }
+        return [
+          ...priority,
+          ...sortByStoredOrder(rest, tabOrderRef.current["Long Videos"]),
+        ];
+      }
+      case "Podcast": {
+        const podcasts = projects.filter((p) => p.isPodcast === true);
+        if (podcasts.length === 0) return [];
+        if (!tabOrderRef.current["Podcast"]?.length) {
+          const shuffled = shuffleArray(podcasts);
+          tabOrderRef.current["Podcast"] = shuffled.map((p) => p.id);
+          return shuffled;
+        }
+        return sortByStoredOrder(podcasts, tabOrderRef.current["Podcast"]);
+      }
       default:
-        filtered = projects;
+        return projects;
     }
-    return shuffleArray(filtered);
   }, [projects, activeTab]);
 
   // Save current tab state before switching, restore when switching to a tab
@@ -90,41 +153,26 @@ export function VideoShowcase() {
       const currentTab = TABS[activeTabIndex];
       tabStateRef.current[currentTab] = {
         scrollLeft: carouselRef.current?.scrollLeft ?? 0,
-        visibleCount: visibleProjects.length,
       };
       setActiveTabIndex(newIndex);
     },
-    [activeTabIndex, visibleProjects.length]
+    [activeTabIndex],
   );
 
-  // Update visible projects when tab or filtered list changes
-  const prevActiveTabIndexRef = useRef(activeTabIndex);
+  // Show all filtered projects for current tab (no lazy batching - needed for seamless loop)
   useEffect(() => {
-    if (prevActiveTabIndexRef.current !== activeTabIndex) {
-      const newTab = TABS[activeTabIndex];
-      const savedState = tabStateRef.current[newTab];
-
-      if (savedState) {
-        setVisibleProjects(filteredProjects.slice(0, savedState.visibleCount));
-        requestAnimationFrame(() => {
-          if (carouselRef.current) {
-            carouselRef.current.scrollLeft = savedState.scrollLeft;
-          }
-        });
-      } else {
-        setVisibleProjects(filteredProjects.slice(0, INITIAL_VISIBLE_VIDEOS));
-      }
-
-      prevActiveTabIndexRef.current = activeTabIndex;
-    } else {
-      setVisibleProjects((prev) => {
-        const count = Math.max(prev.length, INITIAL_VISIBLE_VIDEOS);
-        const newVisible = filteredProjects.slice(0, count);
-        return newVisible.length > 0 ? newVisible : prev;
+    const savedState = tabStateRef.current[activeTab];
+    setVisibleProjects(filteredProjects);
+    if (savedState) {
+      requestAnimationFrame(() => {
+        if (carouselRef.current) {
+          carouselRef.current.scrollLeft = savedState.scrollLeft;
+        }
       });
+    } else if (carouselRef.current) {
+      carouselRef.current.scrollLeft = 0;
     }
-  }, [activeTabIndex, filteredProjects]);
-
+  }, [activeTab, filteredProjects]);
 
   // Initialize with static thumbnails immediately
   useEffect(() => {
@@ -141,7 +189,7 @@ export function VideoShowcase() {
         THUMBNAIL_URLS[project.id as keyof typeof THUMBNAIL_URLS] ||
         `https://img.youtube.com/vi/${project.id}/hqdefault.jpg`,
       statistics: { viewCount: 0, likeCount: 0 },
-    }));
+    })) as VideoProject[];
 
     setProjects(initialProjects);
     setLoading(false);
@@ -178,21 +226,25 @@ export function VideoShowcase() {
           const { data, timestamp } = JSON.parse(cachedData);
           // Use cache if it's less than 1 hour old
           if (Date.now() - timestamp < 3600000) {
-            const updatedProjects = initialProjects.map((project) => {
-              const cachedProject = data.find((d: any) => d.id === project.id);
-              return {
-                ...project,
-                title: cachedProject?.title || project.title,
-                thumbnailUrl:
-                  cachedProject?.thumbnails?.maxres?.url ||
-                  cachedProject?.thumbnails?.high?.url ||
-                  project.thumbnailUrl,
-                statistics: cachedProject?.statistics || {
-                  viewCount: 0,
-                  likeCount: 0,
-                },
-              };
-            });
+            const updatedProjects: VideoProject[] = initialProjects.map(
+              (project) => {
+                const cachedProject = data.find(
+                  (d: { id: string }) => d.id === project.id,
+                );
+                return {
+                  ...project,
+                  title: cachedProject?.title || project.title,
+                  thumbnailUrl:
+                    cachedProject?.thumbnails?.maxres?.url ||
+                    cachedProject?.thumbnails?.high?.url ||
+                    project.thumbnailUrl,
+                  statistics: cachedProject?.statistics || {
+                    viewCount: 0,
+                    likeCount: 0,
+                  },
+                } as VideoProject;
+              },
+            );
 
             // Calculate and update stats
             const totalViews = updatedProjects.reduce(
@@ -232,7 +284,7 @@ export function VideoShowcase() {
       );
 
       // Update projects with fetched data
-      const updatedProjects = initialProjects.map((project) => {
+      const updatedProjects: VideoProject[] = initialProjects.map((project) => {
         const details = detailsMap.get(project.id);
         return {
           ...project,
@@ -242,7 +294,7 @@ export function VideoShowcase() {
             details?.thumbnails?.high?.url ||
             project.thumbnailUrl,
           statistics: details?.statistics || { viewCount: 0, likeCount: 0 },
-        };
+        } as VideoProject;
       });
 
       // Calculate total views and likes
@@ -287,51 +339,64 @@ export function VideoShowcase() {
     }
   };
 
-  // Load more videos as user scrolls (uses filtered list for current tab)
-  const loadMoreVideos = useCallback(() => {
-    if (visibleProjects.length < filteredProjects.length) {
-      const nextBatch = filteredProjects.slice(
-        visibleProjects.length,
-        visibleProjects.length + 3,
-      );
-      setVisibleProjects((prev) => [...prev, ...nextBatch]);
-    }
-  }, [visibleProjects.length, filteredProjects]);
+  // Measure the first set of items for seamless loop reset
+  const firstSetRef = useRef<HTMLDivElement>(null);
+  const singleSetWidthRef = useRef(0);
 
-  // Auto-scroll functionality
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (autoScroll && !isDragging && !loading) {
-      interval = setInterval(() => {
-        if (carouselRef.current) {
-          carouselRef.current.scrollLeft += 2;
-
-          // Load more videos when approaching the end
-          if (
-            carouselRef.current.scrollLeft + carouselRef.current.offsetWidth >
-            carouselRef.current.scrollWidth - 500
-          ) {
-            loadMoreVideos();
-          }
-
-          // Reset to beginning when reaching end
-          if (
-            carouselRef.current.scrollLeft >=
-            carouselRef.current.scrollWidth -
-              carouselRef.current.offsetWidth -
-              10
-          ) {
-            carouselRef.current.scrollLeft = 0;
-          }
-        }
-      }, 15);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
+    const el = firstSetRef.current;
+    if (!el) return;
+    const measure = () => {
+      singleSetWidthRef.current = el.offsetWidth;
     };
-  }, [autoScroll, isDragging, loading, loadMoreVideos]);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [visibleProjects]);
+
+  // Seamless loop: reset scroll using measured first-set width
+  const checkAndResetScroll = useCallback(() => {
+    const el = carouselRef.current;
+    const setWidth = singleSetWidthRef.current;
+    if (!el || setWidth <= 0) return;
+
+    // gap-3 = 12px between the two sets
+    const resetPoint = setWidth + 12;
+    if (el.scrollLeft >= resetPoint) {
+      el.scrollLeft -= resetPoint;
+    }
+  }, []);
+
+  // Auto-scroll with requestAnimationFrame for smoothness
+  useEffect(() => {
+    let animId: number;
+    let lastTime = 0;
+    const speed = 2; // px per frame at 60fps — increase for faster, decrease for slower
+
+    const step = (time: number) => {
+      if (!autoScroll || isDragging || loading) {
+        animId = requestAnimationFrame(step);
+        lastTime = time;
+        return;
+      }
+
+      if (lastTime) {
+        const delta = time - lastTime;
+        const px = speed * (delta / 16.67); // Normalize to ~60fps
+        if (carouselRef.current) {
+          carouselRef.current.scrollLeft += px;
+          checkAndResetScroll();
+        }
+      }
+
+      lastTime = time;
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animId);
+  }, [autoScroll, isDragging, loading, checkAndResetScroll]);
 
   // Mouse event handlers for drag scrolling
   function handleMouseDown(event: any) {
@@ -365,14 +430,6 @@ export function VideoShowcase() {
       const x = event.pageX - carouselRef.current.offsetLeft;
       const walk = (x - startX) * 2; // Scroll speed multiplier
       carouselRef.current.scrollLeft = scrollLeftPos - walk;
-
-      // Load more videos when dragging near the end
-      if (
-        carouselRef.current.scrollLeft + carouselRef.current.offsetWidth >
-        carouselRef.current.scrollWidth - 500
-      ) {
-        loadMoreVideos();
-      }
     }
   }
 
@@ -396,14 +453,6 @@ export function VideoShowcase() {
       });
 
       // Load more videos when scrolling right
-      if (
-        carouselRef.current.scrollLeft +
-          carouselRef.current.offsetWidth +
-          scrollAmount >
-        carouselRef.current.scrollWidth - 500
-      ) {
-        loadMoreVideos();
-      }
     }
   };
 
@@ -496,153 +545,167 @@ export function VideoShowcase() {
 
               <div
                 ref={carouselRef}
-                className="flex gap-3 overflow-x-scroll scrollbar-hide cursor-grab active:cursor-grabbing px-16"
+                className="flex overflow-x-scroll scrollbar-hide cursor-grab active:cursor-grabbing"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
                 onMouseMove={handleMouseMove}
+                onScroll={checkAndResetScroll}
                 role="region"
                 aria-live="polite"
               >
-                {visibleProjects.map((project, index) => (
-                  <motion.div
-                    key={`${project.id}-${index}`}
-                    initial={false}
-                    className={`relative flex-shrink-0 overflow-hidden ${
-                      project.isShort
-                        ? "min-w-[197px] h-[350px]" // Vertical aspect ratio (9:16)
-                        : "min-w-[500px] h-[350px]" // Horizontal aspect ratio (16:9)
-                    } border border-neutral-700 rounded-sm transition-all duration-300 group-hover:border-neutral-500`}
-                    onMouseEnter={() => setHoveredVideo(project.id)}
-                    onMouseLeave={() => setHoveredVideo(null)}
-                    tabIndex={0}
-                    onFocus={() => setCurrentFocusIndex(index)}
-                    onKeyDown={(e) => handleKeyDown(e, index)}
-                    variants={itemVariants}
+                {/* Two identical sets for seamless infinite loop */}
+                {[0, 1].map((setIdx) => (
+                  <div
+                    key={setIdx}
+                    ref={setIdx === 0 ? firstSetRef : undefined}
+                    className={`flex gap-3 shrink-0 ${setIdx === 0 ? "pl-16" : "ml-3 pr-16"}`}
                   >
-                    <Link
-                      href={`https://www.youtube.com/watch?v=${project.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block h-full group"
-                      aria-label={`Watch ${project.title}`}
-                      onClick={(e) => {
-                        if (!isMobile && hoveredVideo === project.id) {
-                          // If on desktop and video is already playing, allow the link to work
-                          return true;
-                        } else if (!isMobile) {
-                          // If on desktop and video is not playing, prevent navigation and show preview
-                          e.preventDefault();
-                          setHoveredVideo(project.id);
+                    {visibleProjects.map((project, index) => (
+                      <motion.div
+                        key={`${project.id}-s${setIdx}-${index}`}
+                        initial={false}
+                        className={`relative shrink-0 overflow-hidden ${
+                          project.isShort
+                            ? "min-w-[197px] h-[350px]" // Vertical aspect ratio (9:16)
+                            : "min-w-[500px] h-[350px]" // Horizontal aspect ratio (16:9)
+                        } border border-neutral-700 rounded-sm transition-all duration-300 group-hover:border-neutral-500`}
+                        onMouseEnter={() => setHoveredVideo(project.id)}
+                        onMouseLeave={() => setHoveredVideo(null)}
+                        tabIndex={0}
+                        onFocus={() =>
+                          setCurrentFocusIndex(index % visibleProjects.length)
                         }
-                        // On mobile, let the link work normally (direct to YouTube)
-                      }}
-                    >
-                      <div className="relative h-full overflow-hidden bg-neutral-900">
-                        {!isMobile && hoveredVideo === project.id ? ( // Custom video player when hovered
-                          <div className="h-full w-full relative">
-                            {/* Custom video player with CSS overlay to hide YouTube UI */}
-                            <div className="absolute inset-0 w-full h-full youtube-embed-container">
-                              <div className="relative w-full h-full overflow-hidden">
-                                <iframe
-                                  src={`https://www.youtube.com/embed/${
-                                    project.id
-                                  }?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${
-                                    project.id
-                                  }&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&disablekb=1&origin=${
-                                    typeof window !== "undefined"
-                                      ? window.location.origin
-                                      : ""
-                                  }`}
-                                  title={project.title}
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  className="absolute inset-0 w-[300%] h-[300%] left-[-100%] top-[-100%]"
-                                  style={{
-                                    pointerEvents: "none",
-                                  }}
-                                  frameBorder="0"
-                                  aria-hidden="true" // Hide from screen readers since it's just visual
-                                  loading="lazy"
-                                ></iframe>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          // Thumbnail image when not hovered
-                          <div className="h-full w-full relative transition-transform duration-700 ease-out group-hover:scale-105">
-                            <Image
-                              src={
-                                project.thumbnailUrl ||
-                                `/placeholder.svg?height=720&width=${
-                                  project.isShort ? "405" : "1280"
-                                }&query=minimal video ${
-                                  project.isShort ? "short" : "editing"
-                                }`
-                              }
-                              alt={`Thumbnail for ${project.title}`}
-                              fill
-                              className="object-cover transition-all duration-700 ease-out"
-                              priority={index < 3} // Prioritize loading only the first few images
-                              sizes={
-                                project.isShort
-                                  ? "(max-width: 768px) 197px, 197px"
-                                  : "(max-width: 768px) 100vw, 500px"
-                              }
-                              loading={index < 3 ? "eager" : "lazy"}
-                            />
-                          </div>
-                        )}
-
-                        {/* Background overlay with gradient for title readability */}
-                        <div
-                          className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out"
-                          aria-hidden="true"
-                        ></div>
-
-                        {/* Play button (only show when not playing) */}
-                        {!isMobile && hoveredVideo !== project.id && (
-                          <div
-                            className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500 ease-out flex items-center justify-center"
-                            aria-hidden="true"
-                          >
-                            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out transform scale-75 group-hover:scale-100">
-                              <Play className="h-7 w-7 text-black ml-0.5" />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Mobile-specific play button (always visible) */}
-                        {isMobile && (
-                          <div
-                            className="absolute inset-0 bg-black/10 flex items-center justify-center"
-                            aria-hidden="true"
-                          >
-                            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                              <Play className="h-7 w-7 text-black ml-0.5" />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Video title */}
-                        <div
-                          className={`absolute bottom-0 left-0 p-4 w-full ${
-                            isMobile
-                              ? "opacity-100"
-                              : "opacity-0 group-hover:opacity-100"
-                          } transform ${
-                            isMobile
-                              ? "translate-y-0"
-                              : "translate-y-2 group-hover:translate-y-0"
-                          } transition-all duration-500 ease-out`}
+                        onKeyDown={(e) =>
+                          handleKeyDown(e, index % visibleProjects.length)
+                        }
+                        variants={itemVariants}
+                      >
+                        <Link
+                          href={`https://www.youtube.com/watch?v=${project.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block h-full group"
+                          aria-label={`Watch ${project.title}`}
+                          onClick={(e) => {
+                            if (!isMobile && hoveredVideo === project.id) {
+                              // If on desktop and video is already playing, allow the link to work
+                              return true;
+                            } else if (!isMobile) {
+                              // If on desktop and video is not playing, prevent navigation and show preview
+                              e.preventDefault();
+                              setHoveredVideo(project.id);
+                            }
+                            // On mobile, let the link work normally (direct to YouTube)
+                          }}
                         >
-                          <h3 className="text-white text-sm font-medium line-clamp-2">
-                            {project.title}
-                          </h3>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
+                          <div className="relative h-full overflow-hidden bg-neutral-900">
+                            {!isMobile && hoveredVideo === project.id ? ( // Custom video player when hovered
+                              <div className="h-full w-full relative">
+                                {/* Custom video player with CSS overlay to hide YouTube UI */}
+                                <div className="absolute inset-0 w-full h-full youtube-embed-container">
+                                  <div className="relative w-full h-full overflow-hidden">
+                                    <iframe
+                                      src={`https://www.youtube.com/embed/${
+                                        project.id
+                                      }?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${
+                                        project.id
+                                      }&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&fs=0&disablekb=1&origin=${
+                                        typeof window !== "undefined"
+                                          ? window.location.origin
+                                          : ""
+                                      }`}
+                                      title={project.title}
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      className="absolute inset-0 w-[300%] h-[300%] left-[-100%] top-[-100%]"
+                                      style={{
+                                        pointerEvents: "none",
+                                      }}
+                                      frameBorder="0"
+                                      aria-hidden="true" // Hide from screen readers since it's just visual
+                                      loading="lazy"
+                                    ></iframe>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              // Thumbnail image when not hovered
+                              <div className="h-full w-full relative transition-transform duration-700 ease-out group-hover:scale-105">
+                                <Image
+                                  src={
+                                    project.thumbnailUrl ||
+                                    `/placeholder.svg?height=720&width=${
+                                      project.isShort ? "405" : "1280"
+                                    }&query=minimal video ${
+                                      project.isShort ? "short" : "editing"
+                                    }`
+                                  }
+                                  alt={`Thumbnail for ${project.title}`}
+                                  fill
+                                  className="object-cover transition-all duration-700 ease-out"
+                                  priority={index < 3} // Prioritize loading only the first few images
+                                  sizes={
+                                    project.isShort
+                                      ? "(max-width: 768px) 197px, 197px"
+                                      : "(max-width: 768px) 100vw, 500px"
+                                  }
+                                  loading={index < 3 ? "eager" : "lazy"}
+                                />
+                              </div>
+                            )}
+
+                            {/* Background overlay with gradient for title readability */}
+                            <div
+                              className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out"
+                              aria-hidden="true"
+                            ></div>
+
+                            {/* Play button (only show when not playing) */}
+                            {!isMobile && hoveredVideo !== project.id && (
+                              <div
+                                className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500 ease-out flex items-center justify-center"
+                                aria-hidden="true"
+                              >
+                                <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out transform scale-75 group-hover:scale-100">
+                                  <Play className="h-7 w-7 text-black ml-0.5" />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Mobile-specific play button (always visible) */}
+                            {isMobile && (
+                              <div
+                                className="absolute inset-0 bg-black/10 flex items-center justify-center"
+                                aria-hidden="true"
+                              >
+                                <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                                  <Play className="h-7 w-7 text-black ml-0.5" />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Video title */}
+                            <div
+                              className={`absolute bottom-0 left-0 p-4 w-full ${
+                                isMobile
+                                  ? "opacity-100"
+                                  : "opacity-0 group-hover:opacity-100"
+                              } transform ${
+                                isMobile
+                                  ? "translate-y-0"
+                                  : "translate-y-2 group-hover:translate-y-0"
+                              } transition-all duration-500 ease-out`}
+                            >
+                              <h3 className="text-white text-sm font-medium line-clamp-2">
+                                {project.title}
+                              </h3>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
                 ))}
               </div>
 
