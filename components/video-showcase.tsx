@@ -52,7 +52,10 @@ export function VideoShowcase() {
   const [visibleProjects, setVisibleProjects] = useState<VideoProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(false);
+  const [sectionVisible, setSectionVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [highlightActive, setHighlightActive] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -369,13 +372,65 @@ export function VideoShowcase() {
     }
   }, []);
 
+  // Start carousel only when section scrolls into view
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !sectionVisible) {
+          setSectionVisible(true);
+          setTimeout(() => {
+            setAutoScroll(true);
+            setHighlightActive(false);
+          }, 800);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [sectionVisible]);
+
+  // Reset highlight when tab changes
+  const prevTabForHighlight = useRef(activeTabIndex);
+  useEffect(() => {
+    if (prevTabForHighlight.current !== activeTabIndex) {
+      prevTabForHighlight.current = activeTabIndex;
+      setHighlightActive(true);
+      setAutoScroll(false);
+      setTimeout(() => {
+        setAutoScroll(true);
+        setHighlightActive(false);
+      }, 1500);
+    }
+  }, [activeTabIndex]);
+
+  // Determine which IDs are priority for the current tab
+  const currentPriorityIds = useMemo(() => {
+    switch (activeTab) {
+      case "Shorts":
+        return new Set(SHORTS_PRIORITY_IDS as readonly string[]);
+      case "Long Videos":
+        return new Set(LONG_VIDEOS_PRIORITY_IDS as readonly string[]);
+      default:
+        return new Set<string>();
+    }
+  }, [activeTab]);
+
   // Auto-scroll with requestAnimationFrame for smoothness
   const autoScrollRef = useRef(autoScroll);
   const isDraggingRef = useRef(isDragging);
   const loadingRef = useRef(loading);
-  useEffect(() => { autoScrollRef.current = autoScroll; }, [autoScroll]);
-  useEffect(() => { isDraggingRef.current = isDragging; }, [isDragging]);
-  useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => {
+    autoScrollRef.current = autoScroll;
+  }, [autoScroll]);
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     let animId: number;
@@ -383,7 +438,12 @@ export function VideoShowcase() {
     const speed = 1.5; // px per frame at 60fps — increase for faster, decrease for slower
 
     const step = (time: number) => {
-      if (autoScrollRef.current && !isDraggingRef.current && !loadingRef.current && lastTime) {
+      if (
+        autoScrollRef.current &&
+        !isDraggingRef.current &&
+        !loadingRef.current &&
+        lastTime
+      ) {
         const delta = time - lastTime;
         const px = speed * (delta / 16.67);
         const el = carouselRef.current;
@@ -414,13 +474,13 @@ export function VideoShowcase() {
 
   function handleMouseUp() {
     setIsDragging(false);
-    setAutoScroll(true);
+    if (sectionVisible && !highlightActive) setAutoScroll(true);
   }
 
   function handleMouseLeave() {
     if (isDragging) {
       setIsDragging(false);
-      setAutoScroll(true);
+      if (sectionVisible && !highlightActive) setAutoScroll(true);
     }
   }
 
@@ -485,6 +545,7 @@ export function VideoShowcase() {
   return (
     <>
       <motion.section
+        ref={sectionRef}
         id="work"
         className="py-16 bg-black overflow-hidden"
         aria-labelledby="work-heading"
@@ -531,8 +592,12 @@ export function VideoShowcase() {
           ) : (
             <div
               className="overflow-hidden relative"
-              onMouseEnter={() => setAutoScroll(false)}
-              onMouseLeave={() => setAutoScroll(true)}
+              onMouseEnter={() => {
+                if (sectionVisible && !highlightActive) setAutoScroll(false);
+              }}
+              onMouseLeave={() => {
+                if (sectionVisible && !highlightActive) setAutoScroll(true);
+              }}
               aria-roledescription="carousel"
               aria-label="Video showcase carousel"
             >
@@ -549,7 +614,11 @@ export function VideoShowcase() {
               <div
                 ref={carouselRef}
                 className="flex overflow-x-scroll scrollbar-hide cursor-grab active:cursor-grabbing"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none", overscrollBehavior: "none" }}
+                style={{
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  overscrollBehavior: "none",
+                }}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
@@ -704,6 +773,19 @@ export function VideoShowcase() {
                                 {project.title}
                               </h3>
                             </div>
+
+                            {/* Dim overlay for non-priority videos — always rendered, opacity controlled */}
+                            {currentPriorityIds.size > 0 &&
+                              !currentPriorityIds.has(project.id) && (
+                                <div
+                                  className={`absolute inset-0 bg-black/60 pointer-events-none transition-opacity duration-[1500ms] ease-out ${
+                                    highlightActive
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                  aria-hidden="true"
+                                />
+                              )}
                           </div>
                         </Link>
                       </motion.div>
