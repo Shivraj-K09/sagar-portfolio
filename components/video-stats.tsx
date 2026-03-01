@@ -48,7 +48,7 @@ export function VideoStats({
           setAnimationStarted(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     const statsSection = document.getElementById("stats-section");
@@ -166,7 +166,90 @@ export function VideoStats({
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8" role="list">
+        {/* Mobile: single container with 3 inline stats */}
+        <motion.div
+          className="md:hidden relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden"
+          variants={itemVariants}
+        >
+          <div className="grid grid-cols-3" role="list">
+            <div className="p-4 flex flex-col items-center text-center" role="listitem">
+              <div className="p-2.5 mb-2 bg-neutral-100 dark:bg-neutral-900 rounded-full">
+                <Eye
+                  size={20}
+                  className="text-neutral-700 dark:text-neutral-300"
+                  aria-hidden="true"
+                />
+              </div>
+              {loading ? (
+                <div className="h-6 w-14 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-1.5"></div>
+              ) : (
+                <p className="text-lg sm:text-xl font-semibold mb-1" aria-live="polite">
+                  <span aria-hidden="true">
+                    {formatCompactNumber(animatedViews)}
+                  </span>
+                  <span className="sr-only">
+                    {formatNumber(animatedViews)} total views
+                  </span>
+                </p>
+              )}
+              <h3 className="text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                Total Views
+              </h3>
+            </div>
+
+            <div
+              className="p-4 flex flex-col items-center text-center border-x border-neutral-200 dark:border-neutral-800"
+              role="listitem"
+            >
+              <div className="p-2.5 mb-2 bg-neutral-100 dark:bg-neutral-900 rounded-full">
+                <ThumbsUp
+                  size={20}
+                  className="text-neutral-700 dark:text-neutral-300"
+                  aria-hidden="true"
+                />
+              </div>
+              {loading ? (
+                <div className="h-6 w-14 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-1.5"></div>
+              ) : (
+                <p className="text-lg sm:text-xl font-semibold mb-1" aria-live="polite">
+                  <span aria-hidden="true">
+                    {formatCompactNumber(animatedLikes)}
+                  </span>
+                  <span className="sr-only">
+                    {formatNumber(animatedLikes)} total likes
+                  </span>
+                </p>
+              )}
+              <h3 className="text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                Total Likes
+              </h3>
+            </div>
+
+            <div className="p-4 flex flex-col items-center text-center" role="listitem">
+              <div className="p-2.5 mb-2 bg-neutral-100 dark:bg-neutral-900 rounded-full">
+                <Play
+                  size={20}
+                  className="text-neutral-700 dark:text-neutral-300"
+                  aria-hidden="true"
+                />
+              </div>
+              {loading ? (
+                <div className="h-6 w-12 bg-neutral-200 dark:bg-neutral-800 rounded-md animate-pulse mb-1.5"></div>
+              ) : (
+                <p className="text-lg sm:text-xl font-semibold mb-1">
+                  <span aria-hidden="true">{totalVideos}+</span>
+                  <span className="sr-only">{totalVideos} total videos</span>
+                </p>
+              )}
+              <h3 className="text-[11px] sm:text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                Videos
+              </h3>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Desktop/Tablet: keep card style, always side by side */}
+        <div className="hidden md:grid grid-cols-3 gap-8" role="list">
           {/* Views Card */}
           <motion.div
             className="relative group"

@@ -164,7 +164,7 @@ export function HeroSection() {
             <span className="relative inline-block">
               <span className="relative z-10">visual</span>
               <div
-                className="absolute bottom-1 left-0 w-full h-[0.875rem] animate-underline"
+                className="absolute left-0 w-full bottom-[0.02em] h-[0.16em] sm:h-[0.18em] md:h-[0.2em] lg:h-[0.22em] animate-underline pointer-events-none"
                 style={{
                   background:
                     "linear-gradient(135deg, #7928CA, #4361EE, #3F8EFC, #61DAFB, #FF9966, #FF0080)",

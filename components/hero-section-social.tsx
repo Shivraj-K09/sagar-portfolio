@@ -3,6 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
+import { FileText } from "lucide-react";
 import { InstagramIcon } from "./icons/instagram-icon";
 import { TwitterIcon } from "./icons/twitter-icon";
 import { LinkedinIcon } from "./icons/linkedin-icon";
@@ -34,6 +35,12 @@ export function SocialIcons() {
       url: "http://www.linkedin.com/in/sagarkadgond",
       Icon: LinkedinIcon,
       ariaLabel: "Visit Sagar's LinkedIn profile",
+    },
+    {
+      name: "Resume",
+      url: "/Sagar_Resume.pdf",
+      Icon: FileText,
+      ariaLabel: "Open Sagar's resume PDF",
     },
   ];
 
